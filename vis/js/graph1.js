@@ -1,3 +1,4 @@
+
 var highlight = ['Jeff Dasovich',
     'Sara Shackleton',
     'Kay Mann',
