@@ -1,0 +1,29 @@
+/* Style the search box */
+#personSearch {
+    width: 100%;
+    font-size: 18px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 0.2em;
+}
+
+/* Style the navigation menu */
+#persons {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Style the navigation links */
+#persons li a {
+    background-color: #f6f6f6;
+    padding: 12px;
+    text-decoration: none;
+    font-size: 18px;
+    color: black;
+    display: block
+}
+
+#persons li a:hover {
+    background-color: #eee;
+}

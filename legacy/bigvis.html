@@ -55,9 +55,9 @@
     var wordstore = null;
 
     var hoverMailContainer = document.getElementById('hover-mail');
-    d3.json("/poc2/app/mails.json", function (mails) {
-        d3.json("/poc2/app/people.json", function (people) {
-            d3.json("/poc2/app/words.json", function (words) {
+    d3.json("../vis/data/mails.json", function (mails) {
+        d3.json("../vis/data/people.json", function (people) {
+            d3.json("../vis/data/words.json", function (words) {
                 mailstore = mails;
                 peoplestore = people;
                 wordstore = words;
@@ -86,7 +86,7 @@
                     if (!(p['name'] in acc))
                         acc[p['name']] = p;
                     return acc;
-                }, {});
+                }, {}); // map from emails to people, could be computed before
 
                 function density(lst) {
                     var grid = [];
@@ -127,29 +127,30 @@
                     return popularity[d['name']] > 150;
                 }).sort(function (a, b) {
                     return popularity[b['name']] - popularity[a['name']]
-                });
+                }); // full info about people in here
 
-                var pppl = relevantPeople.reduce(function (acc, p) {
-                    if (acc.indexOf(p['name']) < 0) acc.push(p['name']);
+                var pppl = relevantPeople.reduce(function (acc, p) { //
+                    if (acc.indexOf(p['name']) == -1) acc.push(p['name']);
                     return acc;
-                }, []);
+                }, []); // list of relevant people (only email)
                 var conns = mails.reduce(function (acc, m) {
-                    if (pppl.indexOf(m['from']) >= 0 && pppl.indexOf(m['to']) >= 0) {
-                        var f = (m['from'] >= m['to']) ? m['from'] : m['to'];
-                        var t = (m['from'] < m['to']) ? m['from'] : m['to'];
+                    if (pppl.indexOf(m['from']) >= 0 && pppl.indexOf(m['to']) >= 0) { // why not write includes(...) ?!
+                        var f = (m['from'] >= m['to']) ? m['from'] : m['to']; // string comparision?
+                        var t = (m['from'] < m['to']) ? m['from'] : m['to']; // probably for the direction but still weird; todo ask tim
                         if (!(f in acc)) acc[f] = {};
                         if (!(t in acc[f])) acc[f][t] = 0;
                         acc[f][t]++;
                     }
                     return acc;
-                }, {});
+                }, {}); // js object (matrix) containings counts for each [from][to] email addresses
 
                 var c = [];
                 Object.keys(conns).forEach(function (f) {
                     Object.keys(conns[f]).forEach(function (t) {
                         c.push({'f': f, 't': t, 'cnt': conns[f][t], 'start': pplMap[f]['pos'], 'end': pplMap[t]['pos']})
                     });
-                });
+                }); // array containing js object for each connection (better for sparse matrices?
+                // also contians positions of each of the emails from the person
 
                 var radios = d3.select('body').append('form')
                     .attr('style', 'position:absolute; top:10px; right:10px;')

@@ -1,124 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Semantic Network Visualisation</title>
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="https://d3js.org/d3-hsv.v0.1.min.js"></script>
-    <script src="https://d3js.org/d3-contour.v1.min.js"></script>
-    <style>
-        input[type='radio'] {
-            float: left;
-        }
+var highlight = ['Jeff Dasovich',
+    'Sara Shackleton',
+    'Kay Mann',
+    'Tana Jones',
+    'Vince Kaminski',
+    'Chris Germany',
+    'Pete Davis',
+    'UNK',
+    'Gerald Nemec',
+    'Matthew Lenhart',
+    'Debra Perlingiere',
+    'Mark Taylor',
+    'John Arnold',
+    'Louise Kitchen',
+    'Susan Scott',
+    'Kate Symes',
+    'Sally Beck',
+    'Elizabeth Sager',
+    'Eric Bass',
+    'D Steffes',
+    'Michelle Cash',
+    'Lynn Blair',
+    'Mike Maggi',
+    'Drew Fossum',
+    'Carol Clair',
+    'J Kaminski',
+    'John Lavorato',
+    'Michelle Nelson',
+    'Marie Heard',
+    'Jeffrey Shankman',
+    'Dan Hyvl',
+    'Steven Kean',
+    'Richard Shapiro',
+    'Mike Mcconnell',
+    'Kimberly Watson',
+    'Outlook Team',
+    'Benjamin Rogers',
+    'Phillip Love',
+    'Mike Grigsby',
+    'Rod Hayslett',
+    'Daren Farmer',
+    'Chris Dorland',
+    'Shelley Corman',
+    'Kevin Hyatt',
+    'Stanley Horton',
+    'Eva Pao Enron',
+    'Arsystem',
+    'Michelle Lokay',
+    'Mark Haedicke',
+    'Kerri Thompson',
+    'David Delainey',
+    'Darron Giron',
+    'Bill Williams',
+    'Susan Mara',
+    'Houston',
+    'Dutch Quigley',
+    'W White',
+    'Scott Neal',
+    'Robin Rodrigue',
+    'Mary Cook',
+    'David Forster',
+    'John.J.',
+    'Enron Announcements'
+][0];
+highlight = 'none';
 
-        label {
-            display: block;
-        }
+// 01: 2631.505970287577
+// 02: 3333.9513311368687
+// 03: 4023.692814617172
+// 04: 3235.5327991385075
+// 05: 3333.9513311368687
+// 06: 3235.5327991385075
+// 09: 3106.756895634146
+// 10: 2992.9676614187697
+// 11: 26067.876329178576
+// 12: 24776.955336558865
 
-        #hover-mail {
-            position: absolute;
-            top: 10px;
-            right: 300px;
-            height: 600px;
-            width: 600px;
-            overflow: auto;
-            display: none;
-            border: 1px dashed grey;
-            padding: 0.8em;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
-<pre id="hover-mail">
+var datastore = null;
+var hoverMailContainer = document.getElementById('hover-mail');
 
-</pre>
-<script>
-    var highlight = ['Jeff Dasovich',
-        'Sara Shackleton',
-        'Kay Mann',
-        'Tana Jones',
-        'Vince Kaminski',
-        'Chris Germany',
-        'Pete Davis',
-        'UNK',
-        'Gerald Nemec',
-        'Matthew Lenhart',
-        'Debra Perlingiere',
-        'Mark Taylor',
-        'John Arnold',
-        'Louise Kitchen',
-        'Susan Scott',
-        'Kate Symes',
-        'Sally Beck',
-        'Elizabeth Sager',
-        'Eric Bass',
-        'D Steffes',
-        'Michelle Cash',
-        'Lynn Blair',
-        'Mike Maggi',
-        'Drew Fossum',
-        'Carol Clair',
-        'J Kaminski',
-        'John Lavorato',
-        'Michelle Nelson',
-        'Marie Heard',
-        'Jeffrey Shankman',
-        'Dan Hyvl',
-        'Steven Kean',
-        'Richard Shapiro',
-        'Mike Mcconnell',
-        'Kimberly Watson',
-        'Outlook Team',
-        'Benjamin Rogers',
-        'Phillip Love',
-        'Mike Grigsby',
-        'Rod Hayslett',
-        'Daren Farmer',
-        'Chris Dorland',
-        'Shelley Corman',
-        'Kevin Hyatt',
-        'Stanley Horton',
-        'Eva Pao Enron',
-        'Arsystem',
-        'Michelle Lokay',
-        'Mark Haedicke',
-        'Kerri Thompson',
-        'David Delainey',
-        'Darron Giron',
-        'Bill Williams',
-        'Susan Mara',
-        'Houston',
-        'Dutch Quigley',
-        'W White',
-        'Scott Neal',
-        'Robin Rodrigue',
-        'Mary Cook',
-        'David Forster',
-        'John.J.',
-        'Enron Announcements'
-    ][0];
-    highlight = 'none';
-
-    // 01: 2631.505970287577
-    // 02: 3333.9513311368687
-    // 03: 4023.692814617172
-    // 04: 3235.5327991385075
-    // 05: 3333.9513311368687
-    // 06: 3235.5327991385075
-    // 09: 3106.756895634146
-    // 10: 2992.9676614187697
-    // 11: 26067.876329178576
-    // 12: 24776.955336558865
-
-    var datastore = null;
-    var hoverMailContainer = document.getElementById('hover-mail');
-    d3.json("../vis/data/data_15.json.res.web.json", function (data) {
+function buildGraph() {
+    d3.json("data/data_15.json.res.web.json", function (data) {
         datastore = data;
 
         var offset = [Math.abs(data['range']['xmin']), Math.abs(data['range']['ymin'])];
         var span = [data['hspan'], data['vspan']];
-        var size = [800.0, 800.0];
+
+        var size = [$('#graph').width(), $('#graph').height()];
         var gridResolution = [60, 60]; // 20 too small, 40 okay, 80 rough but okay
         var scale = [size[0] / span[0], size[1] / span[1]];
         var height = size[1] + 50; // +50 for text overhang
@@ -129,9 +96,10 @@
         var people = Object.entries(data['people']).map(function (d) {
             return d[1];
         });
-        var svgContainer = d3.select("body").append("svg")
+        var svgContainer = d3.select("#graph").append("svg")
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .attr("id", "svg");
         var svgGroup = svgContainer.append('g');
 
         function pos_x(d) {
@@ -232,18 +200,19 @@
             return sum;
         }, 0));
 
-        var radios = d3.select('body').append('form')
-            .attr('style', 'position:absolute; top:10px; right:10px;')
-            .selectAll('label')
+        var radios = d3.select('#persons')
+            .selectAll('div')
             .data(['none'].concat(relevantPeople))
+            .classed('funkyradio-primary', true)
             .enter()
-            .append('label')
-            .text(function (d) {
-                return (d['name'] || 'NONE!') + ' (' + (popularity[d['name']] || '*') + ')';
-            })
-            .insert('input')
+            .append('div');
+
+        radios.insert('input')
             .attr('type', 'radio')
-            .attr('name', 'highlightSelect')
+            .attr('name', 'radio')
+            .attr('id', function(d, i ) {
+                return 'radio' + i;
+            })
             .attr('value', function (d) {
                 return d['name'] || 'none';
             })
@@ -251,16 +220,28 @@
                 highlight = this.value;
                 update();
             });
+
+        radios.insert('label')
+            .attr('for', function(d, i) {
+                return 'radio' + i;
+            })
+            .text(function (d) {
+                return (d['name'] || 'NONE!') + ' (' + (popularity[d['name']] || '*') + ')';
+            })
+            .on('change', function () {
+                highlight = this.value;
+                update();
+            });
+
         var mailCircles = svgGroup.append('g').selectAll("circle")
             .data(mails)
             .enter()
             .append("circle")
-            .on('mouseover', function (d) {
-                hoverMailContainer.style.display = 'block';
-                hoverMailContainer.innerHTML = d['text'];
-            })
-            .on('mouseout', function (d) {
-                //hoverMailContainer.style.display = 'none';
+            .attr('data-toggle', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true')
+            .attr('title', function(d) {
+                return "<em>" + d['from'] + "</em>:<br>" + d['text'];
             });
 
         var peopleConnections = svgGroup.append('g').selectAll('path')
@@ -346,8 +327,16 @@
             .scaleExtent([1 / 4, 10])
             .on("zoom", zoomed));
 
+        let curr_scale = 1.0;
         function zoomed() {
             svgGroup.attr("transform", d3.event.transform);
+            let scale = Math.max(Math.min(1.5 / d3.event.transform.k, 2.0), 0.6);
+            if(Math.abs(scale - curr_scale) > 0.5) {
+                mailCircles
+                    .attr('r', scale);
+                curr_scale = scale;
+            }
+
         }
 
         function update() {
@@ -386,8 +375,9 @@
             //var i1 = d3.interpolateHsvLong(d3.hsv(60, 1, 0.90), d3.hsv(0, 0, 0.95));
             var i0 = d3.interpolateHsvLong(d3.hsv(95, 0.0, 1.0), d3.hsv(95, 1.0, 1.0));
             var i1 = d3.interpolateHsvLong(d3.hsv(95, 1.0, 1.0), d3.hsv(95, 1.0, 0.5));
+            let threshold = 0.05; //todo use all colors when the threshold is higher
             var interpolateTerrain = function (t) {
-                if (t < 0.05) return d3.hsv(1, 1, 1, 0);
+                if (t < threshold) return d3.hsv(1, 1, 1, 0);
                 return t < 0.5 ? i0(t * 2) : i1((t - 0.5) * 2);
             };
             var min = Math.min.apply(Math, hist);
@@ -408,7 +398,30 @@
 
         update();
     });
+}
+function reload() {
+    let panelToRefresh = $('refresh-container');
+    panelToRefresh.show();
+    var elem = document.getElementById('svg');
+    elem.parentNode.removeChild(elem);
+    buildGraph();
 
-</script>
-</body>
-</html>
+}
+
+buildGraph();
+
+
+/*
+<h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Saved views</span>
+                </h6>
+
+                <ul class="nav flex-column mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span data-feather="file-text"></span>
+                            View 1
+                        </a>
+                    </li>
+                </ul>
+ */
