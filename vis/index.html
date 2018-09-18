@@ -18,17 +18,19 @@
     <link href="css/personSearch.css" rel="stylesheet">
     <link href="css/radiobutton.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
 
 </head>
 
 <body>
 
-<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vis</a>
-</nav>
+
 
 <div class="container-fluid vh-100 d-flex flex-column">
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vis</a>
+    </nav>
+
     <div class="row flex-grow-1">
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
             <div class="sidebar-sticky">
@@ -61,11 +63,11 @@
             </div>
         </nav>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4" id="main">
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0" id="main">
 
 
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Network</h1>
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 px-4 border-bottom">
+                <h1 class="h2">Email Network</h1>
 
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <button type="button"
@@ -82,7 +84,7 @@
                 </div>
             </div>
 
-            <div class="pt-3 pb-2 mb-3 graph" id="graph"></div>
+            <div class="pt-0 pb-0 mb-0 graph" id="graph"></div>
 
         </main>
     </div>
@@ -97,8 +99,8 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
-<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
         integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
         crossorigin="anonymous"></script>
@@ -134,23 +136,8 @@
 
 
 <!-- Slider -->
-<script>
-    $( function() {
-        var handle = $( "#custom-handle" );
+<script src="js/slider.js"></script>
 
-        $( "#slider" ).slider({
-            create: function() {
-                handle.text( $( this ).slider( "value" ) );
-            },
-            slide: function( event, ui ) {
-                handle.text( ui.value );
-            },
-            orientation: "horizontal",
-            range: "min",
-            animate: true
-    });
-    } );
-</script>
 
 </body>
 </html>

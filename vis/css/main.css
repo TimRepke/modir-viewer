@@ -1,5 +1,4 @@
 #graph {
-    height: 100%;
     padding-top: 0px;
     margin-top: 0px;
 }
@@ -12,7 +11,7 @@
 }
 
 .vh-100 {
-    min-height: 100vh;
+    height: 100vh;
 }
 
 
@@ -29,4 +28,12 @@
     margin-top: -.8em;
     text-align: center;
     line-height: 1.6em;
+}
+
+.personLabel {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
 }
