@@ -24,29 +24,28 @@
 
 <body>
 
+<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vis</a>
+</nav>
 
-
-<div class="container-fluid vh-100 d-flex flex-column">
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vis</a>
-    </nav>
+<div class="container-fluid vh-100 d-flex">
 
     <div class="row flex-grow-1">
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
             <div class="sidebar-sticky">
 
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>Threshold</span>
-                </h6>
-                <div id="slider" class="flex-column ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content">
-                    <div id="custom-handle" class="ui-slider-handle"></div>
+
+                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-3 mb-0 text-muted" for="slider-heatmap">Heatmap</label>
+                <div id="slider-heatmap" class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
                 </div>
 
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                    <span>People</span>
-                </h6>
+                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-4 mb-0 text-muted" for="slider-connections">Connections</label>
+                <div id="slider-connections" class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
+                </div>
 
-                <ul class="nav flex-column">
+
+                <label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted" for="people">People</label>
+                <ul class="nav flex-column" id="people">
                     <li class="nav-item">
 
                         <input type="text" id="personSearch" onkeyup="filterBoxes()" placeholder="Search.." title="Type in a persons name">
@@ -135,9 +134,11 @@
 
 
 
-<!-- Slider -->
-<script src="js/slider.js"></script>
+<!-- Heatmap -->
+<script src="js/sliderHeatmap.js"></script>
 
+<!-- Connections -->
+<script src="js/sliderConnections.js"></script>
 
 </body>
 </html>

@@ -76,26 +76,23 @@ highlight = 'none';
 // 12: 24776.955336558865
 
 var datastore = null;
-var hoverMailContainer = document.getElementById('hover-mail');
 var heatmap;
 var mails;
 var people;
 var mailCircles;
 var peopleCircles;
+var peopleConnections;
+var c = [];
 
 var offset;
-var size = [$('#main').width(), $('#main').height()];
+var size = computeSize();
 var gridResolution = [60, 60]; // 20 too small, 40 okay, 80 rough but okay
 var scale;
-var threshold = 0.05;
+var heatmapThresholdLow = 0.05;
+var heatmapThresholdHigh = 1.0;
 
-function pos_x(d) {
-    return d['pos'][0];
-}
-
-function pos_y(d) {
-    return d['pos'][1]
-}
+var connectionThresholdLow = 0.0;
+var connectionThresholdHigh = 1.0;
 
 function density(lst) {
     var grid = [];
@@ -118,15 +115,13 @@ function density(lst) {
 
 }
 
-function updateHeatmap(thresh, overwrite) {
+
+
+function updateHeatmap() {
     var hist = density(mails.filter(function (d) {
         return d['from'] === highlight || d['to'] === highlight || highlight === 'none';
     }));
 
-
-    if(overwrite) {
-        threshold = thresh;
-    }
 
 
     //var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90));
@@ -134,9 +129,19 @@ function updateHeatmap(thresh, overwrite) {
     var i0 = d3.interpolateHsvLong(d3.hsv(95, 0.0, 1.0), d3.hsv(95, 1.0, 1.0)); // first white, second green
     var i1 = d3.interpolateHsvLong(d3.hsv(95, 1.0, 1.0), d3.hsv(95, 1.0, 0.5)); // first green, second dark green
     var interpolateTerrain = function (t) {
-        if (t < threshold) return d3.hsv(1, 1, 1, 0); // red, invisible
-        t = (t - threshold) / (1.0 - threshold);
-        return t < 0.5 ? i0(t * 2) : i1((t - 0.5) * 2);
+        t = Math.min(1.0, Math.max(0.0, t));
+        if (t < heatmapThresholdLow)
+            return d3.hsv(1, 1, 1, 0); // red, invisible
+        if (t > heatmapThresholdHigh)
+            return d3.hsv(1, 0, 1, 1);
+
+        let s = (t - heatmapThresholdLow) / (heatmapThresholdHigh - heatmapThresholdLow);
+        if(s < 0.5) {
+            return i0(s * 2);
+        }
+        else {
+            return i1((s - 0.5) * 2);
+        }
     };
     var min = Math.min.apply(Math, hist);
     var max = Math.max.apply(Math, hist);
@@ -145,7 +150,7 @@ function updateHeatmap(thresh, overwrite) {
     heatmap.selectAll('path')
         .data(d3.contours()
             .size([Math.ceil(size[0] / gridResolution[0]), Math.ceil(size[1] / gridResolution[1])])
-            .thresholds(d3.range(min, max * .7, 5))
+            .thresholds(d3.range(min, max, 5))
             (hist))
         .enter().append("path")
         .attr("d", d3.geoPath(d3.geoIdentity().scale(gridResolution[0])))
@@ -193,9 +198,55 @@ function updateSelectedCircles() {
     }).moveToFront();
 }
 
+function updateConnections() {
+    // way smarter: store connections and only bind data once, use them to draw??
+    peopleConnections.selectAll('line').remove();
+    peopleConnections.selectAll('line')
+        .data(c)
+        .enter()
+        .append('line');
+
+    var max = d3.max(c, function(d) {
+        return d['cnt'];
+    });
+    var min = d3.min(c, function(d) {
+        return d['cnt'];
+    });
+
+
+
+    peopleConnections.selectAll('line')
+        .filter(function(d) {
+            return d['cnt'] >= (min + (connectionThresholdLow * (max - min))) && d['cnt'] <= (max - ((1 - connectionThresholdHigh) * (max - min)));
+        })
+        .attr('x1', function (d) {
+            return d['start'][0];
+        })
+        .attr('y1', function (d) {
+            return d['start'][1];
+        })
+        .attr('x2', function (d) {
+            return d['end'][0];
+        })
+        .attr('y2', function (d) {
+            return d['end'][1];
+        })
+        .attr("stroke-width", function (d) {
+            var maxWidth = 10;
+            var minWidth = 0.5;
+            return minWidth + (maxWidth - minWidth) * (d['cnt'] / (max - min));
+            //return 1;
+        })
+        .attr("stroke-opacity", function(d) {
+            return Math.min(Math.max(1 - (d['cnt'] / (max - min)), 0.25), 0.5);
+        })
+        .attr("stroke", "black");
+}
+
 function update() {
-    updateHeatmap(0.05, false);
+    updateHeatmap();
     updateSelectedCircles();
+    updateConnections();
 }
 
 function buildRadios(relevantPeople, popularity) {
@@ -275,6 +326,7 @@ function buildGraph() {
 
 
         heatmap = svgGroup.append('g');
+        peopleConnections = svgGroup.append('g');
 
         var popularity = people.reduce(function (acc, curr) {
             acc[curr['name']] = curr['sent'].length;
@@ -310,11 +362,12 @@ function buildGraph() {
             return acc;
         }, {});
 
-        var c = [];
+        c = [];
         Object.keys(conns).forEach(function (f) {
             Object.keys(conns[f]).forEach(function (t) {
                 c.push({
-                    'f': f, 't': t, 'cnt': conns[f][t],
+                    'f': f, 't': t, 'cnt': conns[f][t] != 906 ? conns[f][t] : 1, // todo is this a bug or a guy sending many emails to himself?
+                    // just temporary to try out connection slider
                     'start': pos(data['people'][f]['vec']),
                     'end': pos(data['people'][t]['vec']),
                     'len': Math.sqrt(
@@ -343,28 +396,6 @@ function buildGraph() {
                 return "<em>" + d['from'] + "</em>:<br>" + d['text'];
             });
 
-        var peopleConnections = svgGroup.append('g').selectAll('path')
-            .data(c)
-            .enter()
-            .append('line')
-            .attr('x1', function (d) {
-                return d['start'][0];
-            })
-            .attr('y1', function (d) {
-                return d['start'][1];
-            })
-            .attr('x2', function (d) {
-                return d['end'][0];
-            })
-            .attr('y2', function (d) {
-                return d['end'][1];
-            })
-            .attr("stroke-width", function (d) {
-                //return d['cnt'] > 1 ? (d['cnt']/3) : 1;
-                return 1;
-            })
-            .attr("stroke-opacity", 0.5)
-            .attr("stroke", "black");
 
         peopleCircles = svgGroup.append('g').selectAll("circle")
             .data(relevantPeople)
@@ -444,17 +475,46 @@ function buildGraph() {
             .scaleExtent([1 / 4, 10])
             .on("zoom", zoomed));
 
-        updateHeatmap(0.05, true);
+        setHeatmapThresholdLow(0.05);
+        setHeatmapThresholdHigh(1.0);
+        updateHeatmap();
         updateSelectedCircles();
+        updateConnections();
     });
 }
 
 function reload() {
-    size = [$('#main').width(), $('#main').height()];
+    size = computeSize();
     let elem = document.getElementById('svg');
     elem.parentNode.removeChild(elem);
     buildGraph();
 }
+
+
+function computeSize() {
+    return [$('#main').width(), $('#main').height()];
+}
+
+function pos_x(d) {
+    return d['pos'][0];
+}
+function pos_y(d) {
+    return d['pos'][1]
+}
+
+function setHeatmapThresholdLow(threshLow) {
+    heatmapThresholdLow = threshLow;
+}
+function setHeatmapThresholdHigh(threshHigh) {
+    heatmapThresholdHigh = threshHigh;
+}
+function setConnectionThresholdLow(threshLow) {
+    connectionThresholdLow = threshLow;
+}
+function setConnectionThresholdHigh(threshHigh) {
+    connectionThresholdHigh = threshHigh;
+}
+
 
 buildGraph();
 
