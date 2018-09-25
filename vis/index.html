@@ -24,7 +24,7 @@
 
 <body>
 
-<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow" id="top-navbar">
     <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vis</a>
 </nav>
 
@@ -65,7 +65,7 @@
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0" id="main">
 
 
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 px-4 border-bottom">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 px-4 border-bottom" id="top-bar">
                 <h1 class="h2">Email Network</h1>
 
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -79,6 +79,14 @@
 
                     <div class="btn-group mr-2">
                         <button class="btn btn-sm btn-outline-secondary">Export</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="login-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+                <div class="modal-dialog">
+                    <div class="modal-content" id="modal-text">
+                        Sample Modal Text
                     </div>
                 </div>
             </div>
@@ -139,6 +147,10 @@
 
 <!-- Connections -->
 <script src="js/sliderConnections.js"></script>
+
+<!-- Person Circles -->
+<script src="js/personCircles.js"></script>
+
 
 </body>
 </html>

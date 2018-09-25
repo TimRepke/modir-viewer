@@ -7,7 +7,7 @@ $( function() {
         max: 100,
         slide: function( event, ui ) {
 
-            slide(ui.values[0]/total, ui.values[1]/total);
+            slideHeatmap(ui.values[0]/total, ui.values[1]/total);
         },
         step: 5,
         values: [5, 100],
@@ -16,7 +16,7 @@ $( function() {
     });
 } );
 
-function slide(percentageLow, percentageHigh) {
+function slideHeatmap(percentageLow, percentageHigh) {
     setHeatmapThresholdLow(percentageLow);
     setHeatmapThresholdHigh(percentageHigh);
     updateHeatmap();

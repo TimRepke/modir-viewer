@@ -82,11 +82,11 @@ var people;
 var mailCircles;
 var peopleCircles;
 var peopleConnections;
-var c = [];
+var connectionArray = [];
 
 var offset;
 var size = computeSize();
-var gridResolution = [60, 60]; // 20 too small, 40 okay, 80 rough but okay
+var gridResolution = computeGridResolution(); // 20 too small, 40 okay, 80 rough but okay
 var scale;
 var heatmapThresholdLow = 0.05;
 var heatmapThresholdHigh = 1.0;
@@ -94,19 +94,50 @@ var heatmapThresholdHigh = 1.0;
 var connectionThresholdLow = 0.0;
 var connectionThresholdHigh = 1.0;
 
+function histSizeY() {
+    return size[1] / gridResolution[1];
+}
+function histSizeX() {
+    return size[0] / gridResolution[0];
+}
+function computeSize() {
+    let main = $('#main');
+    let bar = $('#top-bar');
+    let navbar = $('#top-navbar');
+    return [main.width(), main.height() - bar.height() - navbar.height()];
+}
+
+function computeGridResolution() { // todo compute smart scale which adjusts so the grid fits with error < epsilon
+    let scale = 45;
+    let res = Math.max(Math.floor(size[0] / scale), Math.floor(size[1] / scale));
+    return [res, res];
+}
+
+function pos_x(d) {
+    return d['pos'][0];
+}
+function pos_y(d) {
+    return d['pos'][1];
+}
 function density(lst) {
     var grid = [];
-    for (var i = 0; i < size[1] / gridResolution[1]; i++) {
+    for (var i = 0; i < histSizeY(); i++) {
         grid[i] = [];
-        for (var j = 0; j < size[0] / gridResolution[0]; j++) {
+        for (var j = 0; j < histSizeX(); j++) {
             grid[i][j] = 0;
         }
     }
 
     lst.forEach(function (d) {
-        var x = Math.floor(pos_x(d) / gridResolution[0]);
-        var y = Math.floor(pos_y(d) / gridResolution[1]);
-        grid[(y < grid[0].length) ? y : (grid[0].length - 1)][(x < grid.length) ? x : (grid.length - 1)]++;
+        var x = (pos_x(d) / size[0]) * grid[0].length;
+        var y = (pos_y(d) / size[1]) * grid.length;
+
+        x = Math.max(Math.min(x, grid[0].length - 1), 0);
+        y = Math.max(Math.min(y, grid.length - 1), 0);
+
+        x = Math.floor(x);
+        y = Math.floor(y);
+        grid[y][x]++
     });
 
     return grid.reduce(function (acc, curr) {
@@ -121,7 +152,6 @@ function updateHeatmap() {
     var hist = density(mails.filter(function (d) {
         return d['from'] === highlight || d['to'] === highlight || highlight === 'none';
     }));
-
 
 
     //var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90));
@@ -149,11 +179,11 @@ function updateHeatmap() {
     heatmap.selectAll("path").remove();
     heatmap.selectAll('path')
         .data(d3.contours()
-            .size([Math.ceil(size[0] / gridResolution[0]), Math.ceil(size[1] / gridResolution[1])])
+            .size([Math.ceil(histSizeX()), Math.ceil(histSizeY())])
             .thresholds(d3.range(min, max, 5))
             (hist))
         .enter().append("path")
-        .attr("d", d3.geoPath(d3.geoIdentity().scale(gridResolution[0])))
+        .attr("d", d3.geoPath(d3.geoIdentity().translate([0,0]).scale(gridResolution[1])))
         .attr("fill", function (d) {
             return color(d.value);
         }).exit().remove();
@@ -202,22 +232,22 @@ function updateConnections() {
     // way smarter: store connections and only bind data once, use them to draw??
     peopleConnections.selectAll('line').remove();
     peopleConnections.selectAll('line')
-        .data(c)
+        .data(connectionArray)
         .enter()
         .append('line');
 
-    var max = d3.max(c, function(d) {
+    var max = d3.max(connectionArray, function(d) {
         return d['cnt'];
     });
-    var min = d3.min(c, function(d) {
+    var min = d3.min(connectionArray, function(d) {
         return d['cnt'];
     });
 
 
 
     peopleConnections.selectAll('line')
-        .filter(function(d) {
-            return d['cnt'] >= (min + (connectionThresholdLow * (max - min))) && d['cnt'] <= (max - ((1 - connectionThresholdHigh) * (max - min)));
+        .filter(function(d, i) {
+            return (connectionArray.length * connectionThresholdLow) <= i && i <= (connectionArray.length * connectionThresholdHigh);
         })
         .attr('x1', function (d) {
             return d['start'][0];
@@ -232,13 +262,13 @@ function updateConnections() {
             return d['end'][1];
         })
         .attr("stroke-width", function (d) {
-            var maxWidth = 10;
+            var maxWidth = 20;
             var minWidth = 0.5;
             return minWidth + (maxWidth - minWidth) * (d['cnt'] / (max - min));
             //return 1;
         })
         .attr("stroke-opacity", function(d) {
-            return Math.min(Math.max(1 - (d['cnt'] / (max - min)), 0.25), 0.5);
+            return Math.min(Math.max(1 - (d['cnt'] / (max - min)), 0.20), 0.5);
         })
         .attr("stroke", "black");
 }
@@ -310,6 +340,8 @@ function buildGraph() {
             .attr("id", "svg");
         var svgGroup = svgContainer.append('g');
 
+        heatmap = svgGroup.append('g');
+        peopleConnections = svgGroup.append('g');
 
         function pos(vec) {
             return [(vec[0] + offset[0]) * scale[0], (vec[1] + offset[1]) * scale[1]];
@@ -323,10 +355,6 @@ function buildGraph() {
             d['pos'] = pos(d['vec']);
             return d;
         });
-
-
-        heatmap = svgGroup.append('g');
-        peopleConnections = svgGroup.append('g');
 
         var popularity = people.reduce(function (acc, curr) {
             acc[curr['name']] = curr['sent'].length;
@@ -362,12 +390,11 @@ function buildGraph() {
             return acc;
         }, {});
 
-        c = [];
+        connectionArray = [];
         Object.keys(conns).forEach(function (f) {
             Object.keys(conns[f]).forEach(function (t) {
-                c.push({
-                    'f': f, 't': t, 'cnt': conns[f][t] != 906 ? conns[f][t] : 1, // todo is this a bug or a guy sending many emails to himself?
-                    // just temporary to try out connection slider
+                connectionArray.push({
+                    'f': f, 't': t, 'cnt': conns[f][t],
                     'start': pos(data['people'][f]['vec']),
                     'end': pos(data['people'][t]['vec']),
                     'len': Math.sqrt(
@@ -378,7 +405,11 @@ function buildGraph() {
             });
         });
 
-        console.log(c.reduce(function (sum, curr) {
+        connectionArray.sort(function(a, b) {
+            return a['cnt'] - b['cnt'];
+        });
+
+        console.log(connectionArray.reduce(function (sum, curr) {
             sum += curr['len'];
             return sum;
         }, 0));
@@ -389,12 +420,19 @@ function buildGraph() {
             .data(mails)
             .enter()
             .append("circle")
-            .attr('data-toggle', 'tooltip')
-            .attr('data-placement', 'top')
-            .attr('data-html', 'true')
+            .classed('personCircle', true)
+            .attr('emailSenderName', function(d) {
+                return d['from'];
+            })
             .attr('title', function (d) {
                 return "<em>" + d['from'] + "</em>:<br>" + d['text'];
-            });
+            })
+            .attr('onclick', 'personCircleClick(event)')
+            .attr('data-toggle', 'modal')
+            .attr('data-target', '#login-modal')
+            .attr('data-tooltip', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true');
 
 
         peopleCircles = svgGroup.append('g').selectAll("circle")
@@ -485,22 +523,14 @@ function buildGraph() {
 
 function reload() {
     size = computeSize();
+    gridResolution = computeGridResolution();
     let elem = document.getElementById('svg');
     elem.parentNode.removeChild(elem);
     buildGraph();
 }
 
 
-function computeSize() {
-    return [$('#main').width(), $('#main').height()];
-}
 
-function pos_x(d) {
-    return d['pos'][0];
-}
-function pos_y(d) {
-    return d['pos'][1]
-}
 
 function setHeatmapThresholdLow(threshLow) {
     heatmapThresholdLow = threshLow;
@@ -517,6 +547,26 @@ function setConnectionThresholdHigh(threshHigh) {
 
 
 buildGraph();
+
+
+$(document).ready(function() {
+    $('body').tooltip({
+        selector: "[data-tooltip=tooltip]",
+        container: "body"
+    });
+});
+
+/*
+$(window).resize(function() {
+    if(this.resizeTO) clearTimeout(this.resizeTO);
+    this.resizeTO = setTimeout(function() {
+        $(this).trigger('resizeEnd');
+    }, 500);
+});
+
+$(window).bind('resizeEnd', function() {
+    reload();
+});*/
 
 
 /*
