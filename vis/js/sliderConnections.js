@@ -16,7 +16,7 @@ $( function() {
 } );
 
 function slideConnections(percentageLow, percentageHigh) {
-    setConnectionThresholdLow(percentageLow);
-    setConnectionThresholdHigh(percentageHigh);
+    connectionThresholdLow = percentageLow;
+    connectionThresholdHigh = percentageHigh;
     updateConnections();
 }

@@ -17,7 +17,7 @@ $( function() {
 } );
 
 function slideHeatmap(percentageLow, percentageHigh) {
-    setHeatmapThresholdLow(percentageLow);
-    setHeatmapThresholdHigh(percentageHigh);
+    heatmapThresholdLow = percentageLow;
+    heatmapThresholdHigh = percentageHigh;
     updateHeatmap();
 }

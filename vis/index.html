@@ -35,20 +35,26 @@
             <div class="sidebar-sticky">
 
 
-                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-3 mb-0 text-muted" for="slider-heatmap">Heatmap</label>
-                <div id="slider-heatmap" class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
+                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-3 mb-0 text-muted"
+                       for="slider-heatmap">Heatmap</label>
+                <div id="slider-heatmap"
+                     class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
                 </div>
 
-                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-4 mb-0 text-muted" for="slider-connections">Connections</label>
-                <div id="slider-connections" class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
+                <label class="sidebar-heading d-flex justify-content-between align-items-center pl-3 pr-3 pb-0 mt-4 mb-0 text-muted"
+                       for="slider-connections">Connections</label>
+                <div id="slider-connections"
+                     class="mt-2 slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content pr-10">
                 </div>
 
 
-                <label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted" for="people">People</label>
+                <label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                       for="people">People</label>
                 <ul class="nav flex-column" id="people">
                     <li class="nav-item">
 
-                        <input type="text" id="personSearch" onkeyup="filterBoxes()" placeholder="Search.." title="Type in a persons name">
+                        <input type="text" id="personSearch" onkeyup="filterBoxes()" placeholder="Search.."
+                               title="Type in a persons name">
 
                     </li>
                     <li class="nav flex-column">
@@ -65,7 +71,8 @@
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0" id="main">
 
 
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 px-4 border-bottom" id="top-bar">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 px-4 border-bottom"
+                 id="top-bar">
                 <h1 class="h2">Email Network</h1>
 
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -83,10 +90,16 @@
                 </div>
             </div>
 
-            <div class="modal fade" id="login-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+            <div class="modal fade" id="email-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                 aria-hidden="true" style="display: none;">
                 <div class="modal-dialog">
-                    <div class="modal-content" id="modal-text">
-                        Sample Modal Text
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title"></h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,30 +139,35 @@
 
 
 
-<!-- Search Bar -->
+
+
+<!-- my scripts -->
+
+
 
 <script src="js/searchbar.js"></script>
 
+<script src="js/graph/scale.js"></script>
+<script src="js/graph/zoom.js"></script>
+<script src="js/graph/graph.js"></script>
 
-
-<!-- Graph -->
-
-<script src="js/graph1.js"></script>
-
+<!-- remap tooltip so can be at the same time as modal -->
 <script>
-    $(document).ready(function(){$("body").tooltip({selector:'[data-toggle=tooltip]'})});
+    $(document).ready(function () {
+        $('body').tooltip({
+            selector: "[data-tooltip=tooltip]",
+            container: "body"
+        });
+    });
 </script>
 
-
-
-<!-- Heatmap -->
 <script src="js/sliderHeatmap.js"></script>
 
-<!-- Connections -->
 <script src="js/sliderConnections.js"></script>
 
-<!-- Person Circles -->
-<script src="js/personCircles.js"></script>
+<script src="js/emailCircles.js"></script>
+
+<script src="js/peopleCircles.js"></script>
 
 
 </body>

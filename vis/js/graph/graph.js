@@ -74,7 +74,6 @@ highlight = 'none';
 // 10: 2992.9676614187697
 // 11: 26067.876329178576
 // 12: 24776.955336558865
-
 var datastore = null;
 var heatmap;
 var mails;
@@ -83,16 +82,25 @@ var mailCircles;
 var peopleCircles;
 var peopleConnections;
 var connectionArray = [];
+var topWordsData = [];
+var topWords;
+
 
 var offset;
 var size = computeSize();
-var gridResolution = computeGridResolution(); // 20 too small, 40 okay, 80 rough but okay
+var gridResolution = computeGridResolution(size); // 20 too small, 40 okay, 80 rough but okay
 var scale;
+
 var heatmapThresholdLow = 0.05;
 var heatmapThresholdHigh = 1.0;
 
 var connectionThresholdLow = 0.0;
 var connectionThresholdHigh = 1.0;
+
+let currentMailCircleZoom = 1.0;
+let currentPeopleCircleZoom = 1.0;
+let currentWordZoom = 1.0;
+
 
 function histSizeY() {
     return size[1] / gridResolution[1];
@@ -100,25 +108,7 @@ function histSizeY() {
 function histSizeX() {
     return size[0] / gridResolution[0];
 }
-function computeSize() {
-    let main = $('#main');
-    let bar = $('#top-bar');
-    let navbar = $('#top-navbar');
-    return [main.width(), main.height() - bar.height() - navbar.height()];
-}
 
-function computeGridResolution() { // todo compute smart scale which adjusts so the grid fits with error < epsilon
-    let scale = 45;
-    let res = Math.max(Math.floor(size[0] / scale), Math.floor(size[1] / scale));
-    return [res, res];
-}
-
-function pos_x(d) {
-    return d['pos'][0];
-}
-function pos_y(d) {
-    return d['pos'][1];
-}
 function density(lst) {
     var grid = [];
     for (var i = 0; i < histSizeY(); i++) {
@@ -145,9 +135,6 @@ function density(lst) {
     }, []);
 
 }
-
-
-
 function updateHeatmap() {
     var hist = density(mails.filter(function (d) {
         return d['from'] === highlight || d['to'] === highlight || highlight === 'none';
@@ -179,11 +166,12 @@ function updateHeatmap() {
     heatmap.selectAll("path").remove();
     heatmap.selectAll('path')
         .data(d3.contours()
+            .smooth(true)
             .size([Math.ceil(histSizeX()), Math.ceil(histSizeY())])
             .thresholds(d3.range(min, max, 5))
             (hist))
         .enter().append("path")
-        .attr("d", d3.geoPath(d3.geoIdentity().translate([0,0]).scale(gridResolution[1])))
+        .attr("d", d3.geoPath(d3.geoIdentity().scale(gridResolution[1]).translate([-8,-3])))
         .attr("fill", function (d) {
             return color(d.value);
         }).exit().remove();
@@ -229,12 +217,14 @@ function updateSelectedCircles() {
 }
 
 function updateConnections() {
-    // way smarter: store connections and only bind data once, use them to draw??
-    peopleConnections.selectAll('line').remove();
-    peopleConnections.selectAll('line')
-        .data(connectionArray)
-        .enter()
-        .append('line');
+
+    let connectionArrayFiltered = connectionArray.filter(function(d, i) {
+        return (connectionArray.length * connectionThresholdLow) <= i && i <= (connectionArray.length * connectionThresholdHigh);
+    });
+
+    let peopleConnectionSelection = peopleConnections.selectAll('line')
+        .data(connectionArrayFiltered);
+
 
     var max = d3.max(connectionArray, function(d) {
         return d['cnt'];
@@ -243,12 +233,9 @@ function updateConnections() {
         return d['cnt'];
     });
 
-
-
-    peopleConnections.selectAll('line')
-        .filter(function(d, i) {
-            return (connectionArray.length * connectionThresholdLow) <= i && i <= (connectionArray.length * connectionThresholdHigh);
-        })
+    peopleConnectionSelection
+        .enter()
+        .append('line')
         .attr('x1', function (d) {
             return d['start'][0];
         })
@@ -271,12 +258,64 @@ function updateConnections() {
             return Math.min(Math.max(1 - (d['cnt'] / (max - min)), 0.20), 0.5);
         })
         .attr("stroke", "black");
+
+    peopleConnectionSelection
+        .exit()
+        .remove();
+
+
+
+
+
+
+}
+
+function updateTopWords() {
+    let percentage = Math.max(Math.min(Math.pow(currentWordZoom, 2) / 80, 1.0), 0.0);
+
+    let data = [];
+    for(let i = 0; i < topWordsData.length; i++) {
+        let cell = topWordsData[i];
+        let words = cell.slice(0, Math.ceil(percentage * cell.length));
+        data = data.concat(words);
+    }
+
+    let topWordsText = topWords.selectAll('text')
+        .data(data);
+
+    topWordsText
+        .enter()
+        .append('text')
+        .attr('x', function (d) {
+            return d.x;
+        })
+        .attr('y', function (d) {
+            return d.y;
+        })
+        .text(function (d) {
+            return d.word;
+        })
+        .attr("font-family", "sans-serif")
+        .attr("font-size", function (d) {
+            var size = d.size * 50;
+            if (size < 8) size = 8;
+            if (size > 20) size = 20;
+            return size + 'px';
+        })
+        .attr("fill", "black")
+        .style('pointer-events', 'none');
+
+    topWordsText
+        .exit()
+        .remove();
+
 }
 
 function update() {
     updateHeatmap();
     updateSelectedCircles();
     updateConnections();
+    updateRadios();
 }
 
 function buildRadios(relevantPeople, popularity) {
@@ -315,11 +354,21 @@ function buildRadios(relevantPeople, popularity) {
         });
 }
 
+function updateRadios() {
+    let radios = d3.select("#persons")
+        .selectAll('div')
+        .filter(function(d) {
+            return d['name'] === highlight;
+        })
+        .select('input')
+        .attr('checked', 'true');
+}
+
+
 
 function buildGraph() {
-    d3.json("data/data_15.json.res.web.json", function (data) {
+    d3.json("data/data_15.json.res.web.json.clean.json", function (data) {
         datastore = data;
-
 
         mails = data['mails'];
         people = Object.entries(data['people']).map(function (d) {
@@ -339,9 +388,10 @@ function buildGraph() {
             .attr("height", height)
             .attr("id", "svg");
         var svgGroup = svgContainer.append('g');
-
         heatmap = svgGroup.append('g');
         peopleConnections = svgGroup.append('g');
+        topWords = svgGroup.append('g');
+
 
         function pos(vec) {
             return [(vec[0] + offset[0]) * scale[0], (vec[1] + offset[1]) * scale[1]];
@@ -420,16 +470,22 @@ function buildGraph() {
             .data(mails)
             .enter()
             .append("circle")
-            .classed('personCircle', true)
-            .attr('emailSenderName', function(d) {
+            .classed('emailCircle', true)
+            .attr('senderName', function(d) {
                 return d['from'];
+            })
+            .attr('receiverName', function(d) {
+                return d['to'];
+            })
+            .attr('emailContent', function (d) {
+                return d['text'];
             })
             .attr('title', function (d) {
                 return "<em>" + d['from'] + "</em>:<br>" + d['text'];
             })
-            .attr('onclick', 'personCircleClick(event)')
+            .attr('onclick', 'emailCircleClick(event)') //todo use jquery (after demo)
             .attr('data-toggle', 'modal')
-            .attr('data-target', '#login-modal')
+            .attr('data-target', '#email-modal')
             .attr('data-tooltip', 'tooltip')
             .attr('data-placement', 'top')
             .attr('data-html', 'true');
@@ -439,12 +495,17 @@ function buildGraph() {
             .data(relevantPeople)
             .enter()
             .append("circle")
-            .attr('data-toggle', 'tooltip')
-            .attr('data-placement', 'top')
-            .attr('data-html', 'true')
             .attr('title', function (d) {
                 return d['name'] + "<br>" + d['email'];
-            });
+            })
+            .attr('data-tooltip', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true')
+            .attr('senderName', function(d) {
+                return d['name'];
+            })
+            .attr('onclick', 'peopleCircleClick(event)');
+
 
         mailCircles
             .attr("cx", pos_x)
@@ -454,107 +515,76 @@ function buildGraph() {
             .attr("cx", pos_x)
             .attr("cy", pos_y);
 
-        var topWords = svgGroup.append('g').selectAll('text')
-            .data(data['wordgrid']['words'].reduce(function (acc, curr, i) {
-                var col = Math.floor(i / data['wordgrid']['nCols']);
-                var row = Math.floor((i - (col * data['wordgrid']['nRows'])) % data['wordgrid']['nRows']);
-                //console.log('col: ' + col + ' | row: ' + row);
+        topWordsData = data['wordgrid']['words'].reduce(function (acc, curr, i) { // probably in column major order
+            var col = Math.floor(i / data['wordgrid']['nCols']);
+            var row = Math.floor((i - (col * data['wordgrid']['nRows'])) % data['wordgrid']['nRows']);
+            //console.log('col: ' + col + ' | row: ' + row);
 
-                var xmin = Math.ceil((col * data['wordgrid']['hGridSize']) * scale[0]);
-                var xmax = Math.ceil(((col + 1) * data['wordgrid']['hGridSize']) * scale[0]);
-                var ymin = Math.ceil((row * data['wordgrid']['vGridSize']) * scale[1]);
-                var ymax = Math.ceil(((row + 1) * data['wordgrid']['vGridSize']) * scale[1]);
+            // current cell AABB
+            var xmin = Math.ceil((col * data['wordgrid']['hGridSize']) * scale[0]);
+            var xmax = Math.ceil(((col + 1) * data['wordgrid']['hGridSize']) * scale[0]);
+            var ymin = Math.ceil((row * data['wordgrid']['vGridSize']) * scale[1]);
+            var ymax = Math.ceil(((row + 1) * data['wordgrid']['vGridSize']) * scale[1]);
 
-                for (var run = 0; run < 4 && run < curr.length; run++) {
-                    acc.push({
-                        'x': Math.floor(Math.random() * (xmax - xmin + 1)) + xmin,
-                        'y': Math.floor(Math.random() * (ymax - ymin + 1)) + ymin,
-                        'size': curr[run][1],
-                        'word': curr[run][0]
-                    })
-                }
-                return acc;
-            }, []))
-            .enter()
-            .append('text')
-            .attr('x', function (d) {
-                return d.x;
-            })
-            .attr('y', function (d) {
-                return d.y;
-            })
-            .text(function (d) {
-                return d.word;
-            })
-            .attr("font-family", "sans-serif")
-            .attr("font-size", function (d) {
-                var size = d.size * 50;
-                if (size < 8) size = 8;
-                if (size > 20) size = 20;
-                return size + 'px';
-            })
-            .attr("fill", "black")
-            .style('pointer-events', 'none');
+            let cell = [];
+            for (var run = 0; run < 80 && run < curr.length; run++) { // todo sort by size so only the most important word are shown
+                cell.push({
+                    'x': Math.floor(Math.random() * (xmax - xmin + 1)) + xmin,
+                    'y': Math.floor(Math.random() * (ymax - ymin + 1)) + ymin,
+                    'size': curr[run][1],
+                    'word': curr[run][0]
+                });
+            }
+            if(cell.length > 0) {
+                acc.push(cell);
+            }
+
+            return acc;
+        }, []);
+
+        updateTopWords();
 
 
-        let curr_scale = 1.0;
 
         function zoomed() {
             svgGroup.attr("transform", d3.event.transform);
-            let scale = Math.max(Math.min(1.5 / d3.event.transform.k, 2.0), 0.6);
-            if (Math.abs(scale - curr_scale) > 0.5) {
-                mailCircles
-                    .attr('r', scale);
-                curr_scale = scale;
-            }
+            let currentZoomLevel = d3.event.transform.k;
+            adjustZoomLevel(currentZoomLevel);
         }
 
         svgContainer.call(d3.zoom()
             .scaleExtent([1 / 4, 10])
             .on("zoom", zoomed));
 
-        setHeatmapThresholdLow(0.05);
-        setHeatmapThresholdHigh(1.0);
-        updateHeatmap();
-        updateSelectedCircles();
-        updateConnections();
+        heatmapThresholdLow = 0.05;
+        heatmapThresholdHigh = 1.0;
+
+        update();
+        adjustZoomLevel(1.0);
     });
 }
 
 function reload() {
     size = computeSize();
-    gridResolution = computeGridResolution();
+    gridResolution = computeGridResolution(size);
     let elem = document.getElementById('svg');
     elem.parentNode.removeChild(elem);
     buildGraph();
 }
 
 
+function adjustZoomLevel(currentZoomLevel) {
+    adjustMailCircleZoomLevel(currentZoomLevel);
+    adjustPeopleCircleZoomLevel(currentZoomLevel);
+    adjustWordZoomLevel(currentZoomLevel);
+}
 
 
-function setHeatmapThresholdLow(threshLow) {
-    heatmapThresholdLow = threshLow;
-}
-function setHeatmapThresholdHigh(threshHigh) {
-    heatmapThresholdHigh = threshHigh;
-}
-function setConnectionThresholdLow(threshLow) {
-    connectionThresholdLow = threshLow;
-}
-function setConnectionThresholdHigh(threshHigh) {
-    connectionThresholdHigh = threshHigh;
-}
+
 
 
 buildGraph();
 
-
-$(document).ready(function() {
-    $('body').tooltip({
-        selector: "[data-tooltip=tooltip]",
-        container: "body"
-    });
-});
 
 /*
 $(window).resize(function() {
