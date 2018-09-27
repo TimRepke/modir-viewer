@@ -79,7 +79,7 @@ var heatmap;
 var mails;
 var people;
 var mailCircles;
-var peopleCircles;
+var relevantPeopleCircles;
 var peopleConnections;
 var connectionArray = [];
 var topWordsData = [];
@@ -188,7 +188,7 @@ function updateSelectedCircles() {
             return 0.1;
         });
 
-    var peopleCircleAttributes = peopleCircles
+    var peopleCircleAttributes = relevantPeopleCircles
         .attr("r", function (d) {
             if (d['name'] === highlight) return 6.0;
             return 4.0;
@@ -211,7 +211,7 @@ function updateSelectedCircles() {
             this.parentNode.appendChild(this);
         });
     };
-    var highlightedCircle = peopleCircles.filter(function(d) {
+    var highlightedCircle = relevantPeopleCircles.filter(function(d) {
         return d['name'] == highlight;
     }).moveToFront();
 }
@@ -222,7 +222,7 @@ function updateConnections() {
         return (connectionArray.length * connectionThresholdLow) <= i && i <= (connectionArray.length * connectionThresholdHigh);
     });
 
-    let peopleConnectionSelection = peopleConnections.selectAll('line')
+    let peopleConnectionLines = peopleConnections.selectAll('line')
         .data(connectionArrayFiltered);
 
 
@@ -233,7 +233,7 @@ function updateConnections() {
         return d['cnt'];
     });
 
-    peopleConnectionSelection
+    peopleConnectionLines
         .enter()
         .append('line')
         .attr('x1', function (d) {
@@ -259,7 +259,7 @@ function updateConnections() {
         })
         .attr("stroke", "black");
 
-    peopleConnectionSelection
+    peopleConnectionLines
         .exit()
         .remove();
 
@@ -366,6 +366,15 @@ function updateRadios() {
 
 
 
+function adjustZoomLevel(currentZoomLevel) {
+    adjustMailCircleZoomLevel(currentZoomLevel);
+    adjustPeopleCircleZoomLevel(currentZoomLevel);
+    adjustWordZoomLevel(currentZoomLevel);
+}
+
+
+
+
 function buildGraph() {
     d3.json("data/data_15.json.res.web.json.clean.json", function (data) {
         datastore = data;
@@ -387,10 +396,14 @@ function buildGraph() {
             .attr("width", width)
             .attr("height", height)
             .attr("id", "svg");
+
         var svgGroup = svgContainer.append('g');
+
         heatmap = svgGroup.append('g');
         peopleConnections = svgGroup.append('g');
         topWords = svgGroup.append('g');
+        relevantPeopleCircles = svgGroup.append('g');
+        mailCircles = svgGroup.append('g');
 
 
         function pos(vec) {
@@ -466,7 +479,7 @@ function buildGraph() {
 
         buildRadios(relevantPeople, popularity);
 
-        mailCircles = svgGroup.append('g').selectAll("circle")
+        mailCircles = mailCircles.selectAll("circle")
             .data(mails)
             .enter()
             .append("circle")
@@ -491,7 +504,7 @@ function buildGraph() {
             .attr('data-html', 'true');
 
 
-        peopleCircles = svgGroup.append('g').selectAll("circle")
+        relevantPeopleCircles = relevantPeopleCircles.selectAll("circle")
             .data(relevantPeople)
             .enter()
             .append("circle")
@@ -511,7 +524,7 @@ function buildGraph() {
             .attr("cx", pos_x)
             .attr("cy", pos_y)
             .attr('r', 1.5);
-        peopleCircles
+        relevantPeopleCircles
             .attr("cx", pos_x)
             .attr("cy", pos_y);
 
@@ -542,27 +555,25 @@ function buildGraph() {
             return acc;
         }, []);
 
-        updateTopWords();
-
-
-
-        function zoomed() {
-            svgGroup.attr("transform", d3.event.transform);
-            let currentZoomLevel = d3.event.transform.k;
-            adjustZoomLevel(currentZoomLevel);
-        }
 
         svgContainer.call(d3.zoom()
             .scaleExtent([1 / 4, 10])
-            .on("zoom", zoomed));
+            .on("zoom", function () {
+                svgGroup.attr("transform", d3.event.transform);
+                let currentZoomLevel = d3.event.transform.k;
+                adjustZoomLevel(currentZoomLevel);
+            }));
+
 
         heatmapThresholdLow = 0.05;
         heatmapThresholdHigh = 1.0;
 
+        updateTopWords();
         update();
         adjustZoomLevel(1.0);
     });
 }
+
 
 function reload() {
     size = computeSize();
@@ -571,14 +582,6 @@ function reload() {
     elem.parentNode.removeChild(elem);
     buildGraph();
 }
-
-
-function adjustZoomLevel(currentZoomLevel) {
-    adjustMailCircleZoomLevel(currentZoomLevel);
-    adjustPeopleCircleZoomLevel(currentZoomLevel);
-    adjustWordZoomLevel(currentZoomLevel);
-}
-
 
 
 

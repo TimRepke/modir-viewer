@@ -1,4 +1,4 @@
-function filterBoxes() {
+function filterPeopleRadios() {
     let input, filter, persons, divs, a, i;
     input = document.getElementById("personSearch");
     filter = input.value.toUpperCase();

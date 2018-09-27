@@ -13,7 +13,7 @@ function adjustMailCircleZoomLevel(currentZoomLevel) {
 function adjustPeopleCircleZoomLevel(currentZoomLevel) {
     let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 1.0);
     if (Math.abs(scale - currentPeopleCircleZoom) > 0.07) {
-        peopleCircles.attr('r', 3 * scale);
+        relevantPeopleCircles.attr('r', 3 * scale);
         currentMailCircleZoom = scale;
     }
 }
