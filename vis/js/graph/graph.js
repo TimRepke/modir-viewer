@@ -216,15 +216,26 @@ function updateSelectedCircles() {
     }).moveToFront();
 }
 
+
+
+
 function updateConnections() {
 
     let connectionArrayFiltered = connectionArray.filter(function(d, i) {
         return (connectionArray.length * connectionThresholdLow) <= i && i <= (connectionArray.length * connectionThresholdHigh);
     });
 
+    //peopleConnections.selectAll('line').remove();
+
     let peopleConnectionLines = peopleConnections.selectAll('line')
         .data(connectionArrayFiltered);
 
+    peopleConnectionLines
+        .enter()
+        .append('line');
+    peopleConnectionLines
+        .exit()
+        .remove();
 
     var max = d3.max(connectionArray, function(d) {
         return d['cnt'];
@@ -233,9 +244,8 @@ function updateConnections() {
         return d['cnt'];
     });
 
-    peopleConnectionLines
-        .enter()
-        .append('line')
+
+    peopleConnections.selectAll('line')
         .attr('x1', function (d) {
             return d['start'][0];
         })
@@ -258,16 +268,6 @@ function updateConnections() {
             return Math.min(Math.max(1 - (d['cnt'] / (max - min)), 0.20), 0.5);
         })
         .attr("stroke", "black");
-
-    peopleConnectionLines
-        .exit()
-        .remove();
-
-
-
-
-
-
 }
 
 function updateTopWords() {
