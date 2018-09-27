@@ -282,6 +282,30 @@ function updateTopWords() {
 
     let topWordsText = topWords.selectAll('text')
         .data(data);
+    topWordsText
+        .attr('x', function (d) {
+            return d.x;
+        })
+        .attr('y', function (d) {
+            return d.y;
+        })
+        .text(function (d) {
+            return d.word;
+        })
+        .attr("font-family", "sans-serif")
+        .attr("font-size", function (d) {
+            var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 1));
+            if (size < d.size * 20) size = d.size * 20;
+            size = Math.min(Math.max(size, 10 * (1/currentWordZoom)), 20);
+            return size + 'px';
+        })
+        .attr("fill", function(d) {
+            return '#000000'
+        })
+        .attr("fill-opacity", function (d) {
+            return Math.max(Math.min(10 * d.size, 1.0), 0.4);
+        })
+        .style('pointer-events', 'none');
 
     topWordsText
         .enter()
@@ -297,12 +321,17 @@ function updateTopWords() {
         })
         .attr("font-family", "sans-serif")
         .attr("font-size", function (d) {
-            var size = d.size * 50;
-            if (size < 8) size = 8;
+            var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 2));
+            if (size < 3) size = 3;
             if (size > 20) size = 20;
             return size + 'px';
         })
-        .attr("fill", "black")
+        .attr("fill", function(d) {
+            return '#000000'
+        })
+        .attr("fill-opacity", function (d) {
+            return 0.7;
+        })
         .style('pointer-events', 'none');
 
     topWordsText
