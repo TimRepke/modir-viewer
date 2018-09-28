@@ -17,6 +17,14 @@ def clean(filename):
 			cell_clean.sort(reverse=True, key=cell_sort_key)
 			words_clean.append(cell_clean)
 
+		mails = data['mails']
+		mails_clean = []
+		for i, mail in enumerate(mails):
+			mail['id'] = i
+			mails_clean.append(mail)
+
+		data['mails'] = mails_clean
+
 		print(words_clean)
 
 		data['wordgrid']['words'] = words_clean

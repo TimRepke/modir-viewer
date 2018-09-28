@@ -65,6 +65,7 @@ var highlight = ['Jeff Dasovich',
 highlight = 'none';
 var categories;
 var highlightCategory;
+var highlightedEmailIndizes = [];
 
 // 01: 2631.505970287577
 // 02: 3333.9513311368687
@@ -86,6 +87,8 @@ var peopleConnections;
 var connectionArray = [];
 var topWordsData = [];
 var topWords;
+
+var idx;
 
 
 var offset;
@@ -184,15 +187,24 @@ function updateSelectedCircles() {
     var mailCircleAttributes = mailCircles
         .style("fill", function (d) {
             if (d['from'] === highlight) return '#ff0c27';
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return '#b837a9';
+            }
             return '#0073ff';
-            return d['category'] == highlightCategory; //todo
+            //return d['category'] == highlightCategory; //todo
         })
         .style("fill-opacity", function (d) {
             if (d['from'] === highlight) return 0.8;
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return 0.8;
+            }
             return 0.1;
         })
         .attr('r', function(d) {
-            if (d['from'] === highlight) return currentMailCircleZoom * 1.2;
+            if (d['from'] === highlight) return currentMailCircleZoom * 1.3;
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return currentMailCircleZoom * 1.3;
+            }
             return currentMailCircleZoom;
         });
 
@@ -664,13 +676,34 @@ function buildGraph() {
             }));
 
 
+        /*idx = lunr(function () {
+            this.ref('id');
+            this.field('text');
+            this.field('from');
+            this.field('to');
+
+            mails.forEach(function (doc) {
+                this.add(doc);
+            }, this)
+        });
+        var serializedIdx = JSON.stringify(idx);
+        console.log(serializedIdx);*/
+
+
         heatmapThresholdLow = 0.05;
         heatmapThresholdHigh = 1.0;
 
+        console.log("building graph");
         updateTopWords();
         update();
         adjustZoomLevel(1.0);
+        console.log("done");
     });
+    /*
+    console.log("building index");
+    d3.json("data/search_idx.json", function (data) {
+        idx = lunr.Index.load(data);
+    }); */
 }
 
 
@@ -683,9 +716,8 @@ function reload() {
 }
 
 
-
-
 buildGraph();
+
 
 
 /*
@@ -715,3 +747,29 @@ $(window).bind('resizeEnd', function() {
                     </li>
                 </ul>
  */
+
+
+/*
+
+                <label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                       for="words">Words</label>
+                <ul class="nav flex-column" id="words">
+                    <li class="nav-item">
+
+                        <input type="text" class="nav-searchbar" id="wordSearch" onkeyup="searchWords(event)" placeholder="Search.."
+                               title="Type in a word to search in emails">
+
+                    </li>
+                </ul>
+
+
+
+<label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                       for="categories-nav">Categories</label>
+                <ul class="nav flex-column" id="categories-nav">
+                    <li class="nav-item">
+                        <div class="persons" id="categories">
+                        </div>
+                    </li>
+                </ul>
+*/
