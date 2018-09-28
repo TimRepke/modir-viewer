@@ -9,7 +9,7 @@ function computeSize() {
 }
 
 function computeGridResolution(size) { // todo compute smart scale which adjusts so the grid fits with error < epsilon or offset the heatmap??
-    let scale = 30;
+    let scale = 60;
     let res = Math.max(Math.floor(size[0] / scale), Math.floor(size[1] / scale));
     return [res, res];
 }

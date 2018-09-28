@@ -63,6 +63,9 @@ var highlight = ['Jeff Dasovich',
     'Enron Announcements'
 ][0];
 highlight = 'none';
+var categories;
+var highlightCategory;
+var highlightedEmailIndizes = [];
 
 // 01: 2631.505970287577
 // 02: 3333.9513311368687
@@ -84,6 +87,8 @@ var peopleConnections;
 var connectionArray = [];
 var topWordsData = [];
 var topWords;
+
+var idx;
 
 
 var offset;
@@ -140,6 +145,8 @@ function updateHeatmap() {
         return d['from'] === highlight || d['to'] === highlight || highlight === 'none';
     }));
 
+    var min = Math.min.apply(Math, hist);
+    var max = Math.max.apply(Math, hist);
 
     //var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90));
     //var i1 = d3.interpolateHsvLong(d3.hsv(60, 1, 0.90), d3.hsv(0, 0, 0.95));
@@ -150,7 +157,7 @@ function updateHeatmap() {
         if (t < heatmapThresholdLow)
             return d3.hsv(1, 1, 1, 0); // red, invisible
         if (t > heatmapThresholdHigh)
-            return d3.hsv(1, 0, 1, 1);
+            return d3.hsv(1, 0, 1, 1); // white, visible
 
         let s = (t - heatmapThresholdLow) / (heatmapThresholdHigh - heatmapThresholdLow);
         if(s < 0.5) {
@@ -160,15 +167,14 @@ function updateHeatmap() {
             return i1((s - 0.5) * 2);
         }
     };
-    var min = Math.min.apply(Math, hist);
-    var max = Math.max.apply(Math, hist);
+
     var color = d3.scaleSequential(interpolateTerrain).domain([min, max]);
     heatmap.selectAll("path").remove();
     heatmap.selectAll('path')
         .data(d3.contours()
             .smooth(true)
             .size([Math.ceil(histSizeX()), Math.ceil(histSizeY())])
-            .thresholds(d3.range(min, max, 5))
+            .thresholds(d3.range(min, max, 1))
             (hist))
         .enter().append("path")
         .attr("d", d3.geoPath(d3.geoIdentity().scale(gridResolution[1]).translate([-8,-3])))
@@ -181,11 +187,25 @@ function updateSelectedCircles() {
     var mailCircleAttributes = mailCircles
         .style("fill", function (d) {
             if (d['from'] === highlight) return '#ff0c27';
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return '#b837a9';
+            }
             return '#0073ff';
+            //return d['category'] == highlightCategory; //todo
         })
         .style("fill-opacity", function (d) {
             if (d['from'] === highlight) return 0.8;
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return 0.8;
+            }
             return 0.1;
+        })
+        .attr('r', function(d) {
+            if (d['from'] === highlight) return currentMailCircleZoom * 1.3;
+            if(highlightedEmailIndizes[d['id']] !== undefined) {
+                return currentMailCircleZoom * 1.3;
+            }
+            return currentMailCircleZoom;
         });
 
     var peopleCircleAttributes = relevantPeopleCircles
@@ -296,14 +316,15 @@ function updateTopWords() {
         .attr("font-size", function (d) {
             var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 1));
             if (size < d.size * 20) size = d.size * 20;
-            size = Math.min(Math.max(size, 10 * (1/currentWordZoom)), 20);
+            size = Math.min(Math.max(size, 10 * (1/Math.sqrt(currentWordZoom))), 20);
+            size = Math.max(Math.max(size, (10 - currentWordZoom)), 2);
             return size + 'px';
         })
         .attr("fill", function(d) {
             return '#000000'
         })
         .attr("fill-opacity", function (d) {
-            return Math.max(Math.min(10 * d.size, 1.0), 0.4);
+            return Math.max(Math.min(10 * d.size, 1.0), 0.6);
         })
         .style('pointer-events', 'none');
 
@@ -344,7 +365,45 @@ function update() {
     updateHeatmap();
     updateSelectedCircles();
     updateConnections();
-    updateRadios();
+    updatePersonRadios();
+    updateCategoryRadios();
+}
+
+function buildCategories(categories) { // categories['name']
+
+    var radios = d3.select('#categories')
+        .selectAll('div')
+        .data(['none'].concat(categories))
+        .classed('funkyradio-primary', true)
+        .enter()
+        .append('div');
+
+    radios.insert('input')
+        .attr('type', 'radio')
+        .attr('name', 'radio')
+        .attr('id', function (d, i) {
+            return 'categoryRadio' + i;
+        })
+        .attr('value', function (d) {
+            return d['name'] || 'none';
+        })
+        .on('change', function () {
+            highlightCategory = this.value;
+            update();
+        });
+
+    radios.insert('label')
+        .attr('for', function (d, i) {
+            return 'categoryRadio' + i;
+        })
+        .classed('personLabel', true)
+        .text(function (d) {
+            return (d['name'] || 'NONE!');
+        })
+        .on('change', function () {
+            highlightCategory = this.value;
+            update();
+        });
 }
 
 function buildRadios(relevantPeople, popularity) {
@@ -383,7 +442,7 @@ function buildRadios(relevantPeople, popularity) {
         });
 }
 
-function updateRadios() {
+function updatePersonRadios() {
     let radios = d3.select("#persons")
         .selectAll('div')
         .filter(function(d) {
@@ -393,6 +452,15 @@ function updateRadios() {
         .attr('checked', 'true');
 }
 
+function updateCategoryRadios() {
+    let radios = d3.select("#categories")
+        .selectAll('div')
+        .filter(function(d) {
+            return d['name'] === highlightCategory;
+        })
+        .select('input')
+        .attr('checked', 'true');
+}
 
 
 function adjustZoomLevel(currentZoomLevel) {
@@ -584,6 +652,20 @@ function buildGraph() {
             return acc;
         }, []);
 
+        categories = mails.reduce(function(acc, curr, i) {
+            let category = curr['category'];
+            if(!acc.includes(category) && category !== undefined) {
+                acc.push({
+                        'name' : curr['category']}
+                );
+            }
+            return acc;
+        }, []);
+        categories.map(function(curr, i, arr) {
+            curr['color'] = d3.hsv((i / arr.length) * 360, 1, 1);
+        });
+
+        buildCategories(categories);
 
         svgContainer.call(d3.zoom()
             .scaleExtent([1 / 4, 10])
@@ -594,13 +676,34 @@ function buildGraph() {
             }));
 
 
+        /*idx = lunr(function () {
+            this.ref('id');
+            this.field('text');
+            this.field('from');
+            this.field('to');
+
+            mails.forEach(function (doc) {
+                this.add(doc);
+            }, this)
+        });
+        var serializedIdx = JSON.stringify(idx);
+        console.log(serializedIdx);*/
+
+
         heatmapThresholdLow = 0.05;
         heatmapThresholdHigh = 1.0;
 
+        console.log("building graph");
         updateTopWords();
         update();
         adjustZoomLevel(1.0);
+        console.log("done");
     });
+    /*
+    console.log("building index");
+    d3.json("data/search_idx.json", function (data) {
+        idx = lunr.Index.load(data);
+    }); */
 }
 
 
@@ -613,9 +716,8 @@ function reload() {
 }
 
 
-
-
 buildGraph();
+
 
 
 /*
@@ -645,3 +747,29 @@ $(window).bind('resizeEnd', function() {
                     </li>
                 </ul>
  */
+
+
+/*
+
+                <label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                       for="words">Words</label>
+                <ul class="nav flex-column" id="words">
+                    <li class="nav-item">
+
+                        <input type="text" class="nav-searchbar" id="wordSearch" onkeyup="searchWords(event)" placeholder="Search.."
+                               title="Type in a word to search in emails">
+
+                    </li>
+                </ul>
+
+
+
+<label class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"
+                       for="categories-nav">Categories</label>
+                <ul class="nav flex-column" id="categories-nav">
+                    <li class="nav-item">
+                        <div class="persons" id="categories">
+                        </div>
+                    </li>
+                </ul>
+*/
