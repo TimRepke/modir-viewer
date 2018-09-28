@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import http.server
+from functools import partial
+
 
 class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -13,4 +15,6 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    handler_class = partial(MyHTTPRequestHandler,
+                            directory='../')
     http.server.test(HandlerClass=MyHTTPRequestHandler)

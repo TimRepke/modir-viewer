@@ -405,7 +405,7 @@ function adjustZoomLevel(currentZoomLevel) {
 
 
 function buildGraph() {
-    d3.json("data/data_15.json.res.web.json.clean.json", function (data) {
+    d3.json("../data/data_15.json.res.web.json.clean.json", function (data) {
         datastore = data;
 
         mails = data['mails'];
