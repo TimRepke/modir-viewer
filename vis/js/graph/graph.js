@@ -63,6 +63,8 @@ var highlight = ['Jeff Dasovich',
     'Enron Announcements'
 ][0];
 highlight = 'none';
+var categories;
+var highlightCategory;
 
 // 01: 2631.505970287577
 // 02: 3333.9513311368687
@@ -183,10 +185,15 @@ function updateSelectedCircles() {
         .style("fill", function (d) {
             if (d['from'] === highlight) return '#ff0c27';
             return '#0073ff';
+            return d['category'] == highlightCategory; //todo
         })
         .style("fill-opacity", function (d) {
             if (d['from'] === highlight) return 0.8;
             return 0.1;
+        })
+        .attr('r', function(d) {
+            if (d['from'] === highlight) return currentMailCircleZoom * 1.2;
+            return currentMailCircleZoom;
         });
 
     var peopleCircleAttributes = relevantPeopleCircles
@@ -346,7 +353,45 @@ function update() {
     updateHeatmap();
     updateSelectedCircles();
     updateConnections();
-    updateRadios();
+    updatePersonRadios();
+    updateCategoryRadios();
+}
+
+function buildCategories(categories) { // categories['name']
+
+    var radios = d3.select('#categories')
+        .selectAll('div')
+        .data(['none'].concat(categories))
+        .classed('funkyradio-primary', true)
+        .enter()
+        .append('div');
+
+    radios.insert('input')
+        .attr('type', 'radio')
+        .attr('name', 'radio')
+        .attr('id', function (d, i) {
+            return 'categoryRadio' + i;
+        })
+        .attr('value', function (d) {
+            return d['name'] || 'none';
+        })
+        .on('change', function () {
+            highlightCategory = this.value;
+            update();
+        });
+
+    radios.insert('label')
+        .attr('for', function (d, i) {
+            return 'categoryRadio' + i;
+        })
+        .classed('personLabel', true)
+        .text(function (d) {
+            return (d['name'] || 'NONE!');
+        })
+        .on('change', function () {
+            highlightCategory = this.value;
+            update();
+        });
 }
 
 function buildRadios(relevantPeople, popularity) {
@@ -385,7 +430,7 @@ function buildRadios(relevantPeople, popularity) {
         });
 }
 
-function updateRadios() {
+function updatePersonRadios() {
     let radios = d3.select("#persons")
         .selectAll('div')
         .filter(function(d) {
@@ -395,6 +440,15 @@ function updateRadios() {
         .attr('checked', 'true');
 }
 
+function updateCategoryRadios() {
+    let radios = d3.select("#categories")
+        .selectAll('div')
+        .filter(function(d) {
+            return d['name'] === highlightCategory;
+        })
+        .select('input')
+        .attr('checked', 'true');
+}
 
 
 function adjustZoomLevel(currentZoomLevel) {
@@ -586,6 +640,20 @@ function buildGraph() {
             return acc;
         }, []);
 
+        categories = mails.reduce(function(acc, curr, i) {
+            let category = curr['category'];
+            if(!acc.includes(category) && category !== undefined) {
+                acc.push({
+                        'name' : curr['category']}
+                );
+            }
+            return acc;
+        }, []);
+        categories.map(function(curr, i, arr) {
+            curr['color'] = d3.hsv((i / arr.length) * 360, 1, 1);
+        });
+
+        buildCategories(categories);
 
         svgContainer.call(d3.zoom()
             .scaleExtent([1 / 4, 10])
