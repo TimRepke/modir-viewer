@@ -1,6 +1,6 @@
 import json
 
-bad_words = ['com', 'enron', 'http', 'www', 'mail']
+bad_words = ['com', 'enron', 'http', 'www', 'mail', 'cc', 'subject']
 
 def cell_sort_key(word):
 	return word[1]
@@ -15,7 +15,6 @@ def clean(filename):
 		for cell in words:
 			cell_clean = [word for word in cell if word[0].lower() not in bad_words]
 			cell_clean.sort(reverse=True, key=cell_sort_key)
-			print(cell_clean)
 			words_clean.append(cell_clean)
 
 		print(words_clean)

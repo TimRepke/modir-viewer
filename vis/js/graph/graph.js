@@ -140,6 +140,8 @@ function updateHeatmap() {
         return d['from'] === highlight || d['to'] === highlight || highlight === 'none';
     }));
 
+    var min = Math.min.apply(Math, hist);
+    var max = Math.max.apply(Math, hist);
 
     //var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90));
     //var i1 = d3.interpolateHsvLong(d3.hsv(60, 1, 0.90), d3.hsv(0, 0, 0.95));
@@ -150,7 +152,7 @@ function updateHeatmap() {
         if (t < heatmapThresholdLow)
             return d3.hsv(1, 1, 1, 0); // red, invisible
         if (t > heatmapThresholdHigh)
-            return d3.hsv(1, 0, 1, 1);
+            return d3.hsv(1, 0, 1, 1); // white, visible
 
         let s = (t - heatmapThresholdLow) / (heatmapThresholdHigh - heatmapThresholdLow);
         if(s < 0.5) {
@@ -160,15 +162,14 @@ function updateHeatmap() {
             return i1((s - 0.5) * 2);
         }
     };
-    var min = Math.min.apply(Math, hist);
-    var max = Math.max.apply(Math, hist);
+
     var color = d3.scaleSequential(interpolateTerrain).domain([min, max]);
     heatmap.selectAll("path").remove();
     heatmap.selectAll('path')
         .data(d3.contours()
             .smooth(true)
             .size([Math.ceil(histSizeX()), Math.ceil(histSizeY())])
-            .thresholds(d3.range(min, max, 5))
+            .thresholds(d3.range(min, max, 1))
             (hist))
         .enter().append("path")
         .attr("d", d3.geoPath(d3.geoIdentity().scale(gridResolution[1]).translate([-8,-3])))
@@ -296,14 +297,15 @@ function updateTopWords() {
         .attr("font-size", function (d) {
             var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 1));
             if (size < d.size * 20) size = d.size * 20;
-            size = Math.min(Math.max(size, 10 * (1/currentWordZoom)), 20);
+            size = Math.min(Math.max(size, 10 * (1/Math.sqrt(currentWordZoom))), 20);
+            size = Math.max(Math.max(size, (10 - currentWordZoom)), 2);
             return size + 'px';
         })
         .attr("fill", function(d) {
             return '#000000'
         })
         .attr("fill-opacity", function (d) {
-            return Math.max(Math.min(10 * d.size, 1.0), 0.4);
+            return Math.max(Math.min(10 * d.size, 1.0), 0.6);
         })
         .style('pointer-events', 'none');
 
