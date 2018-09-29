@@ -1,85 +1,91 @@
 class Documents {
-    constructor() {
+    constructor(data, svgGroup, categories, defaultRadius = 1.5) {
+        this.data = data;
+        this.svgGroup = svgGroup;
+        this.categories = categories;
+        this.defaultRadius = defaultRadius;
         this.zoom = 1.0;
-    }
 
-    adjustZoomLevel(currentZoomLevel) {
-        let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 0.6);
-        if (Math.abs(scale - currentMailCircleZoom) > 0.32) {
-            mailCircles.attr('r', scale);
-            currentMailCircleZoom = scale;
-        }
-    }
+        this.highlightColour = '#ff0c27';
+        this.baseColour = '#0073ff';
+        this.highlighted = [];
 
-    update() {
-        var mailCircleAttributes = mailCircles
-            .style("fill", function (d) {
-                if (d['from'] === highlight) return '#ff0c27';
-                if (highlightedEmailIndizes[d['id']] !== undefined) {
-                    return '#b837a9';
-                }
-                return '#0073ff';
-                //return d['category'] == highlightCategory; //todo
-            })
-            .style("fill-opacity", function (d) {
-                if (d['from'] === highlight) return 0.8;
-                if (highlightedEmailIndizes[d['id']] !== undefined) {
-                    return 0.8;
-                }
-                return 0.1;
-            })
-            .attr('r', function (d) {
-                if (d['from'] === highlight) return currentMailCircleZoom * 1.3;
-                if (highlightedEmailIndizes[d['id']] !== undefined) {
-                    return currentMailCircleZoom * 1.3;
-                }
-                return currentMailCircleZoom;
-            });
-    }
-
-    static emailCircleClick(event) {
-
-        var domElement = $(event.target);
-
-        highlight = domElement.attr('senderName');
-        update();
-
-        let text = domElement.attr('emailContent');
-        $('.modal-body').html(text);
-        $('.modal-title').html('From: ' + highlight + '<br>To: ' + domElement.attr('receiverName'));
-
+        this.initLandscape();
     }
 
     initLandscape() {
-        mailCircles = mailCircles.selectAll("circle")
-            .data(mails)
+        this.points = this.svgGroup.selectAll("circle")
+            .data(Object.values(this.data['docs']))
             .enter()
             .append("circle")
             .classed('emailCircle', true)
-            .attr('senderName', function (d) {
-                return d['from'];
+            .attr('doc_id', function (d) {
+                return d['id'];
             })
-            .attr('receiverName', function (d) {
-                return d['to'];
-            })
-            .attr('emailContent', function (d) {
+            .attr('text', function (d) {
                 return d['text'];
             })
-            .attr('title', function (d) {
-                return "<em>" + d['from'] + "</em>:<br>" + d['text'];
-            })
-            .attr('onclick', 'emailCircleClick(event)') //todo use jquery (after demo)
+            .attr('onclick', this.documentOnClick)
             .attr('data-toggle', 'modal')
             .attr('data-target', '#email-modal')
             .attr('data-tooltip', 'tooltip')
             .attr('data-placement', 'top')
-            .attr('data-html', 'true');
-
-
-        mailCircles
+            .attr('data-html', 'true')
             .attr("cx", pos_x)
             .attr("cy", pos_y)
-            .attr('r', 1.5);
+            .attr('r', this.defaultRadius);
+    }
+
+    update() {
+        let that = this;
+        let attributes = this.points
+            .style("fill", function (d) {
+                if (!that.hasSelection() || !that.isSelected(d))
+                    return that.categories.getColour(d) || that.baseColour;
+                return that.highlightColour;
+            })
+            .style("fill-opacity", function (d) {
+                if (!that.hasSelection() || that.isSelected(d))
+                    return 0.8;
+                return 0.1;
+            })
+            .attr('r', function (d) {
+                if (!that.hasSelection() || that.isSelected(d))
+                    return that.zoom * 1.3;
+                return that.zoom;
+            });
+    }
+
+    isSelected(doc) {
+        return this.highlighted.indexOf(doc['id']) < 0
+    }
+
+    hasSelection() {
+        return this.highlighted.length > 0;
+    }
+
+    documentOnClick(event) {
+        let domElement = $(event.target);
+        this.highlight = domElement.attr('senderName');
+        //this.update();
+
+        //let text = domElement.attr('emailContent');
+        //$('.modal-body').html(text);
+        //$('.modal-title').html('From: ' + highlight + '<br>To: ' + domElement.attr('receiverName'));
+
+    }
+
+    adjustZoomLevel(currentZoomLevel) {
+        let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 0.6);
+        if (Math.abs(scale - this.zoom) > 0.32) {
+            this.points.attr('r', scale);
+            this.zoom = scale;
+        }
+    }
+
+    setHighlightedDocs(selection, update = false) {
+        this.highlighted = selection;
+        if (update) this.update();
     }
 
 }

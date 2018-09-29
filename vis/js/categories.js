@@ -5,22 +5,22 @@ class Categories {
         this.categories = data[cat_type + '_index'];
         this.searchBox = document.getElementById(searchBoxId);
         this.selectedCategory = null;
+
+        let size = Object.keys(this.categories).length;
+        let i = 0;
+        for (let key in this.categories) {
+            this.categories[key] = {
+                'docs': this.categories[key],
+                'colour': d3.hsv((i / size) * 360, 1, 1)
+            };
+            i++;
+        }
     }
 
-    init() {
-        categories = mails.reduce(function (acc, curr, i) {
-            let category = curr['category'];
-            if (!acc.includes(category) && category !== undefined) {
-                acc.push({
-                        'name': curr['category']
-                    }
-                );
-            }
-            return acc;
-        }, []);
-        categories.map(function (curr, i, arr) {
-            curr['color'] = d3.hsv((i / arr.length) * 360, 1, 1);
-        });
+    getColour(doc) {
+        let category = doc[this.cat_type];
+        if (!category) return undefined;
+        return this.categories[category]['colour'];
     }
 
     selectCategory(id) {

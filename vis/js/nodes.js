@@ -1,48 +1,53 @@
 class Nodes {
-    constructor(data, landscape, searchBoxId, listId) {
+    constructor(data, svgGroup, searchBoxId, listId) {
         this.data = data;
+        this.svgGroup = svgGroup;
         this.searchBox = document.getElementById(searchBoxId);
-        this.landscape = landscape;
-        this.buildRadios();
-        this.selectedNode = null;
         this.zoom = 1.0;
+        this.listId = listId;
+
+        this.initLandscape();
+        this.initSidebar();
+        this.selectedNode = null;
     }
 
-    adjustZoomLevel(currentZoomLevel) {
-        let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 1.0);
-        if (Math.abs(scale - currentPeopleCircleZoom) > 0.07) {
-            relevantPeopleCircles.attr('r', 3 * scale);
-            currentMailCircleZoom = scale;
-        }
+    initLandscape() {
+        this.dots = this.svgGroup.selectAll("circle")
+            .data(Object.values(this.data['nodes']))
+            .enter()
+            .append("circle")
+            .attr('title', function (d) {
+                return d['name'] + "<br>" + d['email'];
+            })
+            .attr('data-tooltip', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true')
+            .attr('node_id', function (d) {
+                return d['id'];
+            })
+            .attr('name', function (d) {
+                return d['name'];
+            })
+            .attr('onclick', this.dotClicked())
+            .attr("cx", pos_x)
+            .attr("cy", pos_y);
+
     }
 
-    filterPeopleRadios() {
-        let input, filter, persons, divs, a, i;
-        input = document.getElementById("personSearch");
-        filter = input.value.toUpperCase();
-        persons = document.getElementById("persons");
-        divs = persons.getElementsByTagName("div");
-
-        for (i = 0; i < divs.length; i++) {
-            a = divs[i].getElementsByTagName("label")[0];
-            if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
-                divs[i].style.display = "";
-            } else {
-                divs[i].style.display = "none";
-            }
-        }
-    }
-
-    buildRadios(listId) {
+    initSidebar() {
         let that = this;
-        let radios = d3.select(listId)
+        let nodes = ['none'].concat(Object.values(that.data['nodes']));
+        this.radios = d3.select('#' + this.listId)
             .selectAll('div')
-            .data(['none'].concat(Object.values(that.data['nodes'])))
+            .data(nodes)
             .classed('funkyradio-primary', true)
             .enter()
-            .append('div');
+            .append('div')
+            .attr('node_name', function (d) {
+                return d['name'] || 'none';
+            });
 
-        radios.insert('input')
+        this.radios.insert('input')
             .attr('type', 'radio')
             .attr('name', 'radio')
             .attr('id', function (d, i) {
@@ -55,7 +60,7 @@ class Nodes {
                 that.selectNode(this.value);
             });
 
-        radios.insert('label')
+        this.radios.insert('label')
             .attr('for', function (d, i) {
                 return 'node_radio_' + i;
             })
@@ -66,80 +71,100 @@ class Nodes {
             .on('change', function () {
                 that.selectNode(this.value);
             });
+
+        this.searchBox.addEventListener('keyup', this.filterRadios());
     }
 
-    drawNodes() {
+    adjustZoomLevel(currentZoomLevel) {
+        let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 1.0);
+        if (Math.abs(scale - this.zoom) > 0.07) {
+            this.dots.attr('r', 3 * scale);
+            this.zoom = scale;
+        }
+    }
 
-        relevantPeopleCircles.selectAll("circle")
-            .data(relevantPeople)
-            .enter()
-            .append("circle")
-            .attr('title', function (d) {
-                return d['name'] + "<br>" + d['email'];
-            })
-            .attr('data-tooltip', 'tooltip')
-            .attr('data-placement', 'top')
-            .attr('data-html', 'true')
-            .attr('senderName', function (d) {
-                return d['name'];
-            })
-            .attr('onclick', 'peopleCircleClick(event)')
+    getSelectedNode() {
+        return this.data['nodes'][this.selectedNode];
+    }
 
+    getSelectedDocs() {
+        return this.getSelectedNode()['docs'];
+    }
 
-        relevantPeopleCircles
-            .attr("cx", pos_x)
-            .attr("cy", pos_y);
+    filterRadios() {
+        let that = this;
 
+        function inner() {
+            let input = that.searchBox.value.toUpperCase();
+            let divs = document.getElementById(that.listId).getElementsByTagName("div");
+
+            for (let i = 0; i < divs.length; i++) {
+                if (divs[i].getAttribute('node_name').toUpperCase().indexOf(input) > -1) {
+                    divs[i].style.display = "";
+                } else {
+                    divs[i].style.display = "none";
+                }
+            }
+        }
+
+        return inner;
 
     }
 
-    static peopleCircleClick(event) {
+    dotClicked() {
+        let that = this;
 
-        var domElement = $(event.target);
+        function inner(event) {
+            let domElement = $(event.target);
+            //that.selectNode(domElement.attr('node_id'));
+        }
 
-        highlight = domElement.attr('senderName');
-        update();
-
+        return inner;
     }
 
-    selectNode(id) {
+    selectNode(id, update = true) {
         this.selectedNode = id;
-        this.update();
+        if (update) this.update();
     }
 
-    updateSidebar() {
-        let radios = d3.select("#persons")
-            .selectAll('div')
-            .filter(function (d) {
-                return d['name'] === highlight;
-            })
-            .select('input')
-            .attr('checked', 'true');
+
+    isSelected(node) {
+        return node['id'] === this.selectedNode;
     }
 
     updateLandscape() {
-        var peopleCircleAttributes = relevantPeopleCircles
+        let that = this;
+        let peopleCircleAttributes = this.dots
             .attr("r", function (d) {
-                if (d['name'] === highlight) return 6.0;
+                if (that.isSelected(d)) return 6.0;
                 return 4.0;
             })
             .style("fill", function (d) {
-                if (d['name'] === highlight) return '#ff0c27';
+                if (that.isSelected(d)) return '#ff0c27';
                 return '#2357d6';
             })
             .style("fill-opacity", function (d) {
-                if (d['name'] === highlight) return 1.0;
+                if (that.isSelected(d)) return 1.0;
                 return 0.8;
             })
             .style('stroke', function (d) {
-                if (d['name'] === highlight) return 'white';
+                if (that.isSelected(d)) return 'white';
                 return '';
             });
-
-
-        var highlightedCircle = relevantPeopleCircles.filter(function (d) {
-            return d['name'] == highlight;
+        let highlightedCircle = this.dots.filter(function (d) {
+            return that.isSelected(d);
         }).moveToFront();
+    }
+
+    updateSidebar() {
+        let that = this;
+        this.radios
+            .selectAll('div')
+            .filter(function (d) {
+                return that.isSelected(d);
+            })
+            .select('input')
+            .attr('checked', 'true');
     }
 
     update() {
@@ -148,6 +173,7 @@ class Nodes {
     }
 }
 
+/*
 var example_node = {
     "1760871": {
         "id": "1760871",
@@ -163,3 +189,4 @@ var example_node = {
         "categories_b": ["Journal", "ML", "Journal", "ML", "Journal", "Others", "Journal", "ML", "Journal", "Others", "AI", "Others", "ML", "Journal", "Journal", "Journal", "Journal", "ML", "Journal", "Journal", "AI", "Journal", "Journal", "Journal", "Others", "ML", "ML", "ML", "Journal", "Others", "ML", "Journal", "ML", "Others", "Journal", "ML", "AI", "Journal", "Journal", "ComVis", "Journal", "Journal", "Others", "ML", "Journal", "Others", "ML", "Others", "ML", "ComVis", "Journal", "ML", "Journal", "AI", "Journal", "ComLing", "Others", "Journal", "ML", "Journal", "Journal", "ML", "Others", "ML", "Others", "Journal", "ComVis", "Others", "Others", "ML", "ML", "Journal", "Others", "Others"]
     }
 };
+*/

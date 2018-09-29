@@ -1,9 +1,29 @@
+d3.selection.prototype.moveToFront = function () {
+    return this.each(function () {
+        this.parentNode.appendChild(this);
+    });
+};
+
+function pos_x(d) {
+    return d['pos'][0];
+}
+
+function pos_y(d) {
+    return d['pos'][1];
+}
+
 class Landscape {
     constructor(data) {
-        this.canvasSize = Landscape.computeSize();
-        this.size = data['size'];
 
-        this.svgContainer = Landscape.initSVGContainer();
+        this.data = data;
+        this.size = data['size'];
+        this.canvasSize = Landscape.computeSize();
+        this.scale = [
+            this.canvasSize[0] / this.size['width'],
+            this.canvasSize[1] / this.size['height']];
+        this.scaleData();
+
+        this.svgContainer = this.initSVGContainer();
         this.svgGroup = this.svgContainer.append('g');
         this.nodesGroup = this.svgGroup.append('g');
         this.heatmapGroup = this.svgGroup.append('g');
@@ -11,35 +31,55 @@ class Landscape {
         this.wordGridGroup = this.svgGroup.append('g');
         this.documentGroup = this.svgGroup.append('g');
 
-        this.nodes = Nodes(data, this.nodesGroup, 'personSearch', 'persons');
-        this.edges = Edges();
-        this.wordGrid = WordGrid();
-        this.documents = Documents();
-        this.heatmap = Heatmap();
-        this.categories = Categories(data, 'categorySearch', 'categories', 'category_a');
+        this.categories = new Categories(data, 'categorySearch', 'categories', 'category_a');
+        this.nodes = new Nodes(data, this.nodesGroup, 'personSearch', 'persons');
+        this.edges = new Edges(data, this.edgeGroup);
+        //this.wordGrid = new WordGrid();
+        this.documents = new Documents(data, this.documentGroup, this.categories);
+        //this.heatmap = new Heatmap();
 
+        this.update();
         this.initZoom();
     }
 
     update() {
-        this.heatmap.update();
+        //this.heatmap.update();
         this.documents.update();
         this.edges.update();
         this.nodes.update();
         this.categories.update();
     }
 
-    static initSVGContainer() {
+    initSVGContainer() {
         return d3.select("#graph").append("svg")
-            .attr("width", width)
-            .attr("height", height)
+            .attr("width", this.canvasSize[0])
+            .attr("height", this.canvasSize[1])
             .attr("id", "svg");
     }
 
     static computeSize() {
         let main = $('#main');
         let navbar = $('#top-navbar');
-        return [main.width(), main.height() - bar.height() - navbar.height()];
+        return [main.width(), main.height() - navbar.height()];
+    }
+
+    calculateVectorPosition(vec) {
+        let x = (vec[0] + Math.abs(this.size['minx'])) * this.scale[0];
+        let y = Math.abs(vec[1] - this.size['maxy']) * this.scale[1];
+        return [x, y];
+    }
+
+    scaleData() {
+        for (let key in this.data['docs']) {
+            this.data['docs'][key]['pos'] = this.calculateVectorPosition(this.data['docs'][key]['vec']);
+        }
+        for (let key in this.data['nodes']) {
+            this.data['nodes'][key]['pos'] = this.calculateVectorPosition(this.data['nodes'][key]['vec']);
+        }
+        for (let key in this.data['edges']) {
+            this.data['edges'][key]['source_pos'] = this.calculateVectorPosition(this.data['edges'][key]['source_pos']);
+            this.data['edges'][key]['target_pos'] = this.calculateVectorPosition(this.data['edges'][key]['target_pos']);
+        }
     }
 
     initZoom() {
@@ -49,14 +89,43 @@ class Landscape {
             .on("zoom", function () {
                 that.svgGroup.attr("transform", d3.event.transform);
                 let currentZoomLevel = d3.event.transform.k;
-                adjustZoomLevel(currentZoomLevel);
+                that.adjustZoomLevel(currentZoomLevel);
             }));
         this.adjustZoomLevel(1.0);
     }
 
     adjustZoomLevel(currentZoomLevel) {
         this.nodes.adjustZoomLevel(currentZoomLevel);
-        this.wordGrid.adjustZoomLevel(currentZoomLevel);
+        //this.wordGrid.adjustZoomLevel(currentZoomLevel);
         this.documents.adjustZoomLevel(currentZoomLevel);
     }
 }
+
+function init(data) {
+    let landscape = new Landscape(data);
+}
+
+d3.json("../data/export.json", init);
+
+
+function reload() {
+    size = computeSize();
+    gridResolution = computeGridResolution(size);
+    let elem = document.getElementById('svg');
+    elem.parentNode.removeChild(elem);
+    buildGraph(); // == init()
+}
+
+/*
+let samplesize = {
+    "minx": -0.8807507753,
+    "maxx": 1.0,
+    "miny": -0.7126128674,
+    "maxy": 0.9409167171,
+    "width": 1.8807507753,
+    "height": 1.6535295844,
+    "node_weights": {"min": 1, "max": 162, "range": 161},
+    "edge_weights": {"min": 1, "max": 68, "range": 67},
+    "word_grid": {"cols": 5, "rows": 5, "cell_width": 0.3761501551, "cell_height": 0.3307059169}
+};
+*/
