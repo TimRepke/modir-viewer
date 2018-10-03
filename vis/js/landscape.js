@@ -116,7 +116,7 @@ function init(data) {
     let landscape = new Landscape(data);
 }
 
-d3.json("../vis/data/export.json", init);
+d3.json("/data/export.json", init);
 
 
 function reload() {
