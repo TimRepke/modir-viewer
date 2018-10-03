@@ -23,31 +23,40 @@ class Landscape {
             this.canvasSize[1] / this.size['height']];
         this.scaleData();
 
+
         this.svgContainer = this.initSVGContainer();
         this.svgGroup = this.svgContainer.append('g');
-        this.nodesGroup = this.svgGroup.append('g');
         this.heatmapGroup = this.svgGroup.append('g');
         this.edgeGroup = this.svgGroup.append('g');
+        this.nodesGroup = this.svgGroup.append('g');
         this.wordGridGroup = this.svgGroup.append('g');
         this.documentGroup = this.svgGroup.append('g');
 
-        this.categories = new Categories(data, 'categorySearch', 'categories', 'category_a');
-        this.nodes = new Nodes(data, this.nodesGroup, 'personSearch', 'persons');
+        let categoriesId = 'categories';
+        let categoriesSearchId = 'categorySearch';
+        let nodesId = 'persons';
+        let nodesSearchId = 'personSearch';
+        let documentsId = 'filteredDocuments';
+        this.documentGroup.attr('id', documentsId);
+
+        this.categories = new Categories(data, categoriesSearchId, categoriesId, 'category_a');
         this.edges = new Edges(data, this.edgeGroup);
-        //this.wordGrid = new WordGrid();
-        this.documents = new Documents(data, this.documentGroup, this.categories);
-        //this.heatmap = new Heatmap();
+        this.nodes = new Nodes(data, this.nodesGroup, nodesSearchId, nodesId);
+        this.heatmap = new Heatmap(data, this.heatmapGroup, this.canvasSize, documentsId);
+        this.wordGrid = new WordGrid(data, this.wordGridGroup, this.scale);
+        this.documents = new Documents(data, this.documentGroup, this.categories, categoriesId, nodesId, documentsId);
 
         this.update();
         this.initZoom();
     }
 
     update() {
-        //this.heatmap.update();
+        this.heatmap.update();
         this.documents.update();
         this.edges.update();
         this.nodes.update();
         this.categories.update();
+        this.wordGrid.update();
     }
 
     initSVGContainer() {
@@ -96,16 +105,18 @@ class Landscape {
 
     adjustZoomLevel(currentZoomLevel) {
         this.nodes.adjustZoomLevel(currentZoomLevel);
-        //this.wordGrid.adjustZoomLevel(currentZoomLevel);
+        this.wordGrid.adjustZoomLevel(currentZoomLevel);
         this.documents.adjustZoomLevel(currentZoomLevel);
     }
+
+
 }
 
 function init(data) {
     let landscape = new Landscape(data);
 }
 
-d3.json("../data/export.json", init);
+d3.json("../vis/data/export.json", init);
 
 
 function reload() {

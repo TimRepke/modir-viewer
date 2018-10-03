@@ -1,12 +1,11 @@
 class WordGrid {
-    constructor() {
+    constructor(data, wordGrid, scale) {
+        this.data = data;
+        this.wordGrid = wordGrid;
+        this.scale = scale;
         this.zoom = 1.0;
-    }
 
-    computeGridResolution(size) { // todo compute smart scale which adjusts so the grid fits with error < epsilon or offset the heatmap??
-        let scale = 60;
-        let res = Math.max(Math.floor(size[0] / scale), Math.floor(size[1] / scale));
-        return [res, res];
+        this.topWordsData = this.computeTopWordsData();
     }
 
     adjustZoomLevel(currentZoomLevel) {
@@ -17,17 +16,17 @@ class WordGrid {
     }
 
     update() {
-        let percentage = Math.max(Math.min(Math.pow(currentWordZoom, 2) / 80, 1.0), 0.0);
+        let wordsPerCell = this.topWordsData[0].length;
+        let percentage = Math.max(Math.min(Math.pow(this.zoom, 2) / wordsPerCell, 1.0), 0.0);
 
-        let data = [];
-        for (let i = 0; i < topWordsData.length; i++) {
-            let cell = topWordsData[i];
-            let words = cell.slice(0, Math.ceil(percentage * cell.length));
-            data = data.concat(words);
-        }
+        let data = this.topWordsData.reduce((acc, curr, i) => {
+            let words = curr.slice(0, Math.ceil(percentage * curr.length));
+            return acc.concat(words);
+        }, []);
 
-        let topWordsText = topWords.selectAll('text')
+        let topWordsText = this.wordGrid.selectAll('text')
             .data(data);
+
         topWordsText
             .attr('x', function (d) {
                 return d.x;
@@ -36,22 +35,14 @@ class WordGrid {
                 return d.y;
             })
             .text(function (d) {
-                return d.word;
+                return d['word'];
             })
             .attr("font-family", "sans-serif")
-            .attr("font-size", function (d) {
-                var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 1));
-                if (size < d.size * 20) size = d.size * 20;
-                size = Math.min(Math.max(size, 10 * (1 / Math.sqrt(currentWordZoom))), 20);
-                size = Math.max(Math.max(size, (10 - currentWordZoom)), 2);
-                return size + 'px';
-            })
+            .attr("font-size", this.fontSize.bind(this))
             .attr("fill", function (d) {
                 return '#000000'
             })
-            .attr("fill-opacity", function (d) {
-                return Math.max(Math.min(10 * d.size, 1.0), 0.6);
-            })
+            .attr("fill-opacity", this.fillOpacity.bind(this))
             .style('pointer-events', 'none');
 
         topWordsText
@@ -64,21 +55,14 @@ class WordGrid {
                 return d.y;
             })
             .text(function (d) {
-                return d.word;
+                return d['word'];
             })
             .attr("font-family", "sans-serif")
-            .attr("font-size", function (d) {
-                var size = d.size * 50 * (1 / Math.pow(currentWordZoom, 2));
-                if (size < 3) size = 3;
-                if (size > 20) size = 20;
-                return size + 'px';
-            })
+            .attr("font-size", this.fontSize.bind(this))
             .attr("fill", function (d) {
                 return '#000000'
             })
-            .attr("fill-opacity", function (d) {
-                return 0.7;
-            })
+            .attr("fill-opacity", this.fillOpacity.bind(this))
             .style('pointer-events', 'none');
 
         topWordsText
@@ -86,20 +70,33 @@ class WordGrid {
             .remove();
     }
 
-    initData() {
-        topWordsData = data['wordgrid']['words'].reduce(function (acc, curr, i) { // probably in column major order
-            var col = Math.floor(i / data['wordgrid']['nCols']);
-            var row = Math.floor((i - (col * data['wordgrid']['nRows'])) % data['wordgrid']['nRows']);
+    fontSize(d) {
+        let size = Math.max(Math.min(15 * (1 / this.zoom), 20), 3);
+        size = Math.min(Math.max(size, d.size), 20);
+        return size + 'px';
+    }
+    fillOpacity(d) {
+        return Math.max(Math.min(d.size / 5, 1.0), 0.4);
+    }
+
+    computeTopWordsData() {
+        let gridSize = this.data['size']['word_grid'];
+        let data = this.data['word_grid'].reduce((acc, curr, i) => {
+            return acc.concat(curr);
+        }, []);
+        return data.reduce((acc, curr, i) => { // probably in column major order
+            let col = Math.floor(i / gridSize['cols']);
+            let row = Math.floor((i - (col * gridSize['rows'])) % gridSize['rows']);
             //console.log('col: ' + col + ' | row: ' + row);
 
             // current cell AABB
-            var xmin = Math.ceil((col * data['wordgrid']['hGridSize']) * scale[0]);
-            var xmax = Math.ceil(((col + 1) * data['wordgrid']['hGridSize']) * scale[0]);
-            var ymin = Math.ceil((row * data['wordgrid']['vGridSize']) * scale[1]);
-            var ymax = Math.ceil(((row + 1) * data['wordgrid']['vGridSize']) * scale[1]);
+            let xmin = Math.ceil((col * gridSize['cell_width']) * this.scale[0]);
+            let xmax = Math.ceil(((col + 1) * gridSize['cell_width']) * this.scale[0]);
+            let ymin = Math.ceil((row * gridSize['cell_height']) * this.scale[1]);
+            let ymax = Math.ceil(((row + 1) * gridSize['cell_height']) * this.scale[1]);
 
             let cell = [];
-            for (var run = 0; run < 80 && run < curr.length; run++) { // todo sort by size so only the most important word are shown
+            for (let run = 0; run < 80 && run < curr.length; run++) {
                 cell.push({
                     'x': Math.floor(Math.random() * (xmax - xmin + 1)) + xmin,
                     'y': Math.floor(Math.random() * (ymax - ymin + 1)) + ymin,

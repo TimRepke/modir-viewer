@@ -1,13 +1,16 @@
 class Documents {
-    constructor(data, svgGroup, categories, defaultRadius = 1.5) {
+    constructor(data, svgGroup, categories, categoriesId, nodesId, listId, defaultRadius = 1.5) {
         this.data = data;
         this.svgGroup = svgGroup;
         this.categories = categories;
+        this.listId = listId;
+        $('#' + categoriesId).on('selectedDocs', (event, selection) => { this.setHighlightedDocs(selection, selection !== [])});
+        $('#' + nodesId).on('selectedDocs', (event, selection) => { this.setHighlightedDocs(selection, selection !== [])});
         this.defaultRadius = defaultRadius;
         this.zoom = 1.0;
 
         this.highlightColour = '#ff0c27';
-        this.baseColour = '#0073ff';
+        this.baseColour = '#565656';
         this.highlighted = [];
 
         this.initLandscape();
@@ -22,11 +25,10 @@ class Documents {
             .attr('doc_id', function (d) {
                 return d['id'];
             })
-            .attr('text', function (d) {
-                return d['text'];
+            .attr('title', function (d) {
+                return 'Description: ' + d['text'];
             })
-            .attr('onclick', this.documentOnClick)
-            .attr('data-toggle', 'modal')
+            .attr('data-toggle', 'modal') //.attr('onclick', this.documentOnClick.bind(this))
             .attr('data-target', '#email-modal')
             .attr('data-tooltip', 'tooltip')
             .attr('data-placement', 'top')
@@ -40,24 +42,25 @@ class Documents {
         let that = this;
         let attributes = this.points
             .style("fill", function (d) {
-                if (!that.hasSelection() || !that.isSelected(d))
+                if (!that.hasSelection() || that.isSelected(d))
                     return that.categories.getColour(d) || that.baseColour;
-                return that.highlightColour;
+                return that.baseColour;
             })
             .style("fill-opacity", function (d) {
                 if (!that.hasSelection() || that.isSelected(d))
                     return 0.8;
-                return 0.1;
+                return 0.2;
+
             })
             .attr('r', function (d) {
-                if (!that.hasSelection() || that.isSelected(d))
-                    return that.zoom * 1.3;
+                if (that.hasSelection() && that.isSelected(d))
+                    return that.zoom * 1.6;
                 return that.zoom;
             });
     }
 
     isSelected(doc) {
-        return this.highlighted.indexOf(doc['id']) < 0
+        return this.highlighted.indexOf(doc['id']) > 0
     }
 
     hasSelection() {
@@ -66,12 +69,11 @@ class Documents {
 
     documentOnClick(event) {
         let domElement = $(event.target);
-        this.highlight = domElement.attr('senderName');
         //this.update();
 
-        //let text = domElement.attr('emailContent');
-        //$('.modal-body').html(text);
-        //$('.modal-title').html('From: ' + highlight + '<br>To: ' + domElement.attr('receiverName'));
+        let text = domElement.attr('title');
+        $('.modal-body').html(text);
+        $('.modal-title').html('');
 
     }
 
@@ -85,8 +87,16 @@ class Documents {
 
     setHighlightedDocs(selection, update = false) {
         this.highlighted = selection;
-        if (update) this.update();
+        if (update) {
+            this.update();
+            let filtered = this.highlighted.reduce((acc, curr, i) => {
+                acc.push(this.data['docs'][curr]);
+                return acc;
+            }, []);
+            $('#' + this.listId).trigger('filteredDocuments', [filtered]);
+        }
     }
+
 
 }
 

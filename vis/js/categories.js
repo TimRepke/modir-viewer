@@ -1,6 +1,7 @@
 class Categories {
-    constructor(data, searchBoxId, listId, cat_type) {
+    constructor(data, searchBoxId, listId, cat_type) { // cat_type = category_a
         this.data = data;
+        this.listId = listId;
         this.cat_type = cat_type;
         this.categories = data[cat_type + '_index'];
         this.searchBox = document.getElementById(searchBoxId);
@@ -10,11 +11,13 @@ class Categories {
         let i = 0;
         for (let key in this.categories) {
             this.categories[key] = {
+                'name' : key,
                 'docs': this.categories[key],
-                'colour': d3.hsv((i / size) * 360, 1, 1)
+                'colour': d3.hsv((i / size) * 360, 1, 0.7)
             };
             i++;
         }
+        this.initSidebar();
     }
 
     getColour(doc) {
@@ -28,70 +31,92 @@ class Categories {
         this.update();
     }
 
-    buildRadios() {
-        var radios = d3.select('#categories')
+    isSelected(category) {
+        return category['name'] === this.selectedCategory;
+    }
+
+    initSidebar() {
+        let that = this;
+        let categories = Object.values(that.categories).sort((a, b) => {return b['docs'].length - a['docs'].length;});
+
+        this.radios = d3.select('#' + this.listId)
             .selectAll('div')
-            .data(['none'].concat(categories))
+            .data(categories)
             .classed('funkyradio-primary', true)
             .enter()
-            .append('div');
+            .append('div')
+            .attr('category_name', function (d) {
+                return d['name'] || 'none';
+            });
 
-        radios.insert('input')
+        this.radios.insert('input')
             .attr('type', 'radio')
             .attr('name', 'radio')
             .attr('id', function (d, i) {
-                return 'categoryRadio' + i;
+                return 'category_radio_' + i;
             })
             .attr('value', function (d) {
                 return d['name'] || 'none';
             })
             .on('change', function () {
-                highlightCategory = this.value;
-                update();
+                that.selectCategory(this.value);
             });
 
-        radios.insert('label')
+        this.radios.insert('label')
             .attr('for', function (d, i) {
-                return 'categoryRadio' + i;
+                return 'category_radio_' + i;
             })
-            .classed('personLabel', true)
+            .classed('personLabel', true) //todo
             .text(function (d) {
                 return (d['name'] || 'NONE!');
             })
             .on('change', function () {
-                highlightCategory = this.value;
-                update();
+                that.selectCategory(this.value);
             });
+
+        this.searchBox.addEventListener('keyup', this.filterCategoryRadios.bind(this));
+    }
+
+
+    filterCategoryRadios() {
+
+        let input = this.searchBox.value.toUpperCase();
+        let divs = document.getElementById(this.listId).getElementsByTagName("div");
+
+        for (let i = 0; i < divs.length; i++) {
+            if (divs[i].getAttribute('category_name').toUpperCase().indexOf(input) > -1) {
+                divs[i].style.display = "";
+            } else {
+                divs[i].style.display = "none";
+            }
+        }
+
+    }
+
+
+    getSelectedDocs() {
+        return this.categories[this.selectedCategory] !== undefined ? this.categories[this.selectedCategory]['docs'] : [];
+    }
+
+    updateDocuments() {
+        let selection = this.getSelectedDocs();
+        $('#' + this.listId).trigger('selectedDocs', [selection]);
     }
 
     updateSidebar() {
-        let radios = d3.select("#categories")
+        let that = this;
+        this.radios
             .selectAll('div')
             .filter(function (d) {
-                return d['name'] === highlightCategory;
+                return that.isSelected(d);
             })
             .select('input')
             .attr('checked', 'true');
     }
 
     update() {
-
+        this.updateSidebar();
+        this.updateDocuments();
     }
 }
 
-function filterCategoryRadios() {
-    let input, filter, persons, divs, a, i;
-    input = document.getElementById("personSearch");
-    filter = input.value.toUpperCase();
-    persons = document.getElementById("persons");
-    divs = persons.getElementsByTagName("div");
-
-    for (i = 0; i < divs.length; i++) {
-        a = divs[i].getElementsByTagName("label")[0];
-        if (a.innerHTML.toUpperCase().indexOf(filter) > -1) {
-            divs[i].style.display = "";
-        } else {
-            divs[i].style.display = "none";
-        }
-    }
-}

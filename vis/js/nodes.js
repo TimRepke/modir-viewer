@@ -17,7 +17,7 @@ class Nodes {
             .enter()
             .append("circle")
             .attr('title', function (d) {
-                return d['name'] + "<br>" + d['email'];
+                return d['name'];
             })
             .attr('data-tooltip', 'tooltip')
             .attr('data-placement', 'top')
@@ -28,7 +28,7 @@ class Nodes {
             .attr('name', function (d) {
                 return d['name'];
             })
-            .attr('onclick', this.dotClicked())
+            .attr('onclick', this.dotClicked.bind(this))
             .attr("cx", pos_x)
             .attr("cy", pos_y);
 
@@ -36,7 +36,7 @@ class Nodes {
 
     initSidebar() {
         let that = this;
-        let nodes = ['none'].concat(Object.values(that.data['nodes']));
+        let nodes = ['none'].concat(Object.values(that.data['nodes'])).sort((a, b) => b['weight'] - a['weight']);
         this.radios = d3.select('#' + this.listId)
             .selectAll('div')
             .data(nodes)
@@ -64,7 +64,7 @@ class Nodes {
             .attr('for', function (d, i) {
                 return 'node_radio_' + i;
             })
-            .classed('personLabel', true)
+            .classed('personLabel', true) //todo
             .text(function (d) {
                 return (d['name'] || 'NONE!') + ' (' + (d['weight'] || '*') + ')';
             })
@@ -72,7 +72,7 @@ class Nodes {
                 that.selectNode(this.value);
             });
 
-        this.searchBox.addEventListener('keyup', this.filterRadios());
+        this.searchBox.addEventListener('keyup', this.filterNodeRadios.bind(this));
     }
 
     adjustZoomLevel(currentZoomLevel) {
@@ -91,40 +91,35 @@ class Nodes {
         return this.getSelectedNode()['docs'];
     }
 
-    filterRadios() {
-        let that = this;
+    filterNodeRadios() {
 
-        function inner() {
-            let input = that.searchBox.value.toUpperCase();
-            let divs = document.getElementById(that.listId).getElementsByTagName("div");
+        let input = this.searchBox.value.toUpperCase();
+        let divs = document.getElementById(this.listId).getElementsByTagName("div");
 
-            for (let i = 0; i < divs.length; i++) {
-                if (divs[i].getAttribute('node_name').toUpperCase().indexOf(input) > -1) {
-                    divs[i].style.display = "";
-                } else {
-                    divs[i].style.display = "none";
-                }
+        for (let i = 0; i < divs.length; i++) {
+            if (divs[i].getAttribute('node_name').toUpperCase().indexOf(input) > -1) {
+                divs[i].style.display = "";
+            } else {
+                divs[i].style.display = "none";
             }
         }
-
-        return inner;
 
     }
 
     dotClicked() {
-        let that = this;
-
-        function inner(event) {
-            let domElement = $(event.target);
-            //that.selectNode(domElement.attr('node_id'));
-        }
-
-        return inner;
+        let domElement = $(event.target);
+        //this.selectNode(domElement.attr('node_id'));
     }
 
     selectNode(id, update = true) {
         this.selectedNode = id;
-        if (update) this.update();
+        if (update) {
+            this.update();
+            let node = this.data['nodes'][this.selectedNode];
+            let selection = node !== undefined ? node['docs'] : [];
+            $('#' + this.listId).trigger('selectedDocs', [selection]);
+        }
+
     }
 
 
