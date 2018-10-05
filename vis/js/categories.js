@@ -1,11 +1,12 @@
 class Categories {
-    constructor(data, searchBoxId, listId, cat_type) { // cat_type = category_a
+    constructor(data, searchBoxId, listId, cat_type, heatmapCheckboxId) { // cat_type = category_a
         this.data = data;
         this.listId = listId;
         this.cat_type = cat_type;
         this.categories = data[cat_type + '_index'];
         this.searchBox = document.getElementById(searchBoxId);
         this.selectedCategory = null;
+        this.heatmapCheckboxId = heatmapCheckboxId;
 
         let size = Object.keys(this.categories).length;
         let i = 0;
@@ -18,6 +19,7 @@ class Categories {
             i++;
         }
         this.initSidebar();
+        
     }
 
     getColour(doc) {
@@ -28,6 +30,7 @@ class Categories {
 
     selectCategory(id) {
         this.selectedCategory = id;
+        $('#' + this.heatmapCheckboxId).prop('checked', false).change();
         this.update();
     }
 

@@ -4,42 +4,32 @@ class Nodes {
         this.svgGroup = svgGroup;
         this.searchBox = document.getElementById(searchBoxId);
         this.zoom = 1.0;
+        this.customPointScale = 1.0;
         this.listId = listId;
 
-        this.initLandscape();
+        this.nodeData = Object.values(this.data['nodes']).sort((a, b) => b['weight'] - a['weight'])
+
+        //this.initLandscape();
         this.initSidebar();
         this.selectedNode = null;
-    }
 
-    initLandscape() {
-        this.dots = this.svgGroup.selectAll("circle")
-            .data(Object.values(this.data['nodes']))
-            .enter()
-            .append("circle")
-            .attr('title', function (d) {
-                return d['name'];
-            })
-            .attr('data-tooltip', 'tooltip')
-            .attr('data-placement', 'top')
-            .attr('data-html', 'true')
-            .attr('node_id', function (d) {
-                return d['id'];
-            })
-            .attr('name', function (d) {
-                return d['name'];
-            })
-            .attr('onclick', this.dotClicked.bind(this))
-            .attr("cx", pos_x)
-            .attr("cy", pos_y);
+        this.thresholdLow = 0;
+        this.thresholdHigh = 100;
+        this.total = 100;
+
+        this.maxNodeWeight = this.nodeData.reduce((acc, curr, i) => {return Math.max(acc, curr['weight'])}, 0);
+
+        this.update();
+        this.adjustZoomLevel(1.0);
 
     }
+
 
     initSidebar() {
         let that = this;
-        let nodes = ['none'].concat(Object.values(that.data['nodes'])).sort((a, b) => b['weight'] - a['weight']);
         this.radios = d3.select('#' + this.listId)
             .selectAll('div')
-            .data(nodes)
+            .data(['none'].concat(that.nodeData))
             .classed('funkyradio-primary', true)
             .enter()
             .append('div')
@@ -73,14 +63,39 @@ class Nodes {
             });
 
         this.searchBox.addEventListener('keyup', this.filterNodeRadios.bind(this));
+
+
+        $("#slider-nodes").slider({
+            range: true,
+            min: 0,
+            max: 100,
+            slide: function (event, ui) {
+                that.slideNodes(ui.values[0] / that.total, ui.values[1] / that.total);
+            },
+            step: 5,
+            values: [0, 100],
+            orientation: "horizontal",
+            animate: true
+        });
+    }
+
+
+    slideNodes(percentageLow, percentageHigh) {
+        this.thresholdLow = percentageLow;
+        this.thresholdHigh = percentageHigh;
+        this.update();
     }
 
     adjustZoomLevel(currentZoomLevel) {
         let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 1.0);
         if (Math.abs(scale - this.zoom) > 0.07) {
-            this.dots.attr('r', 3 * scale);
             this.zoom = scale;
+            this.svgGroup.selectAll('circle').attr('r', this.zoomLevel.bind(this));
         }
+    }
+
+    zoomLevel(d) {
+        return 3 * this.zoom * this.customPointScale;
     }
 
     getSelectedNode() {
@@ -127,12 +142,60 @@ class Nodes {
         return node['id'] === this.selectedNode;
     }
 
+
     updateLandscape() {
+
         let that = this;
-        let peopleCircleAttributes = this.dots
-            .attr("r", function (d) {
-                if (that.isSelected(d)) return 6.0;
-                return 4.0;
+
+        let filteredNodeData = this.nodeData.slice(Math.max(Math.min(this.thresholdLow * this.nodeData.length, this.nodeData.length - 1), 0), Math.max(this.thresholdHigh * this.nodeData.length) - 1);
+        filteredNodeData.reverse();
+
+        let dots = this.svgGroup.selectAll("circle")
+            .data(filteredNodeData);
+
+
+        dots
+            .attr('title', function (d) {
+                return d['name'];
+            })
+            .attr('data-tooltip', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true')
+            .attr('node_id', function (d) {
+                return d['id'];
+            })
+            .attr('name', function (d) {
+                return d['name'];
+            })
+            .attr('onclick', this.dotClicked.bind(this))
+            .attr("cx", pos_x)
+            .attr("cy", pos_y);
+
+        dots.enter()
+            .append("circle")
+            .attr('title', function (d) {
+                return d['name'];
+            })
+            .attr('data-tooltip', 'tooltip')
+            .attr('data-placement', 'top')
+            .attr('data-html', 'true')
+            .attr('node_id', function (d) {
+                return d['id'];
+            })
+            .attr('name', function (d) {
+                return d['name'];
+            })
+            .attr('onclick', this.dotClicked.bind(this))
+            .attr("cx", pos_x)
+            .attr("cy", pos_y);
+
+
+        dots.exit().remove();
+
+        let peopleCircleAttributes = dots
+            .attr("r", (d) => {
+                if (that.isSelected(d)) return 2 * this.zoomLevel(d);
+                return this.zoomLevel(d);
             })
             .style("fill", function (d) {
                 if (that.isSelected(d)) return '#ff0c27';
@@ -146,7 +209,8 @@ class Nodes {
                 if (that.isSelected(d)) return 'white';
                 return '';
             });
-        let highlightedCircle = this.dots.filter(function (d) {
+
+        let highlightedCircle = dots.filter(function (d) {
             return that.isSelected(d);
         }).moveToFront();
     }
