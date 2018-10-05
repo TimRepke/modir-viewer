@@ -40,7 +40,7 @@ class Landscape {
         let heatmapCheckboxId = 'heatmap-checkbox';
         this.documentGroup.attr('id', documentsId);
 
-        this.categories = new Categories(data, categoriesSearchId, categoriesId, 'category_a', heatmapCheckboxId);
+        this.categories = new Categories(data, categoriesSearchId, categoriesId, 'category_b', heatmapCheckboxId);
         this.edges = new Edges(data, this.edgeGroup);
         this.nodes = new Nodes(data, this.nodesGroup, nodesSearchId, nodesId);
         this.heatmap = new Heatmap(data, this.heatmapGroup, this.canvasSize, documentsId, heatmapCheckboxId);
@@ -66,6 +66,27 @@ class Landscape {
             .attr("width", this.canvasSize[0])
             .attr("height", this.canvasSize[1])
             .attr("id", "svg");
+    }
+
+    initSidebar() {
+        let that = this;
+        $("#slider-min-size").slider({
+            slide: function (event, ui) {
+                that.slideSize(ui.value / 10);
+            },
+            orientation: "vertical",
+            range: "min",
+            min: 5,
+            max: 30,
+            value: 10,
+            animate: true
+        });
+    }
+
+    slideSize(scale) {
+        this.nodes.customPointScale = scale;
+        this.documents.customPointScale = scale;
+        this.update();
     }
 
     static computeSize() {
