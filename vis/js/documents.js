@@ -8,6 +8,7 @@ class Documents {
         $('#' + nodesId).on('selectedDocs', (event, selection) => { this.setHighlightedDocs(selection, selection !== [])});
         this.defaultRadius = defaultRadius;
         this.zoom = 1.0;
+        this.customPointScale = 1.0;
 
         this.highlightColour = '#ff0c27';
         this.baseColour = '#565656';
@@ -52,10 +53,10 @@ class Documents {
                 return 0.2;
 
             })
-            .attr('r', function (d) {
-                if (that.hasSelection() && that.isSelected(d))
-                    return that.zoom * 1.6;
-                return that.zoom;
+            .attr('r', (d) => {
+                if (this.hasSelection() && this.isSelected(d))
+                    return this.zoom * 1.6 * this.customPointScale;
+                return this.zoom * this.customPointScale;
             });
     }
 
@@ -80,10 +81,11 @@ class Documents {
     adjustZoomLevel(currentZoomLevel) {
         let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 0.6);
         if (Math.abs(scale - this.zoom) > 0.32) {
-            this.points.attr('r', scale);
+            this.points.attr('r', scale * this.customPointScale);
             this.zoom = scale;
         }
     }
+
 
     setHighlightedDocs(selection, update = false) {
         this.highlighted = selection;

@@ -1,8 +1,9 @@
 class Heatmap {
-    constructor(data, heatmap, canvasSize, documentsId) {
+    constructor(data, heatmap, canvasSize, documentsId, checkboxId) {
         this.data = data; // prob unused
         this.heatmap = heatmap;
         this.size = canvasSize;
+        this.checkboxId = checkboxId;
 
         $('#' + documentsId).on('filteredDocuments', (event, documents) => { this.show(documents);});
 
@@ -13,6 +14,13 @@ class Heatmap {
         this.allDocuments = Object.values(this.data['docs']);
 
         this.initSidebar();
+
+        this.heatmapOn = true;
+        let that = this;
+        $('#' + this.checkboxId).change(function() {
+            that.heatmapOn = $(this).prop('checked');
+            that.update();
+        })
     }
 
 
@@ -64,6 +72,11 @@ class Heatmap {
 
     update() {
         let docs = this.filteredDocuments.length === 0 ? this.allDocuments : this.filteredDocuments;
+
+        if(!this.heatmapOn) {
+            docs = [];
+        }
+
         let hist = this.density(docs);
 
         /* .filter(function (d) {
