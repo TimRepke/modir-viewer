@@ -28,12 +28,8 @@ class WordGrid {
             .data(data);
 
         topWordsText
-            .attr('x', function (d) {
-                return d.x;
-            })
-            .attr('y', function (d) {
-                return d.y;
-            })
+            .attr('x', this.xPosition.bind(this))
+            .attr('y', this.yPosition.bind(this))
             .text(function (d) {
                 return d['word'];
             })
@@ -48,12 +44,8 @@ class WordGrid {
         topWordsText
             .enter()
             .append('text')
-            .attr('x', function (d) {
-                return d.x;
-            })
-            .attr('y', function (d) {
-                return d.y;
-            })
+            .attr('x', this.xPosition.bind(this))
+            .attr('y', this.yPosition.bind(this))
             .text(function (d) {
                 return d['word'];
             })
@@ -68,6 +60,14 @@ class WordGrid {
         topWordsText
             .exit()
             .remove();
+    }
+
+    xPosition(d) {
+        return d.x;
+    }
+
+    yPosition(d) {
+        return d.y;
     }
 
     fontSize(d) {
@@ -85,10 +85,10 @@ class WordGrid {
             return acc.concat(curr);
         }, []);
 
-        return data.reduce((acc, curr, i) => { // probably in column major order
-            let col = Math.floor((i / gridSize['cols']));
-            let row = Math.floor((i - (col * gridSize['rows'])) % gridSize['rows']);
-            //console.log('col: ' + col + ' | row: ' + row);
+        return data.reduce((acc, curr, i) => { // probably in row major order
+            let row = Math.floor((i / gridSize['cols']));
+            let col = Math.floor((i - (row * gridSize['rows'])) % gridSize['cols']);
+            // console.log('col: ' + col + ' | row: ' + row);
 
             // current cell AABB
             let xmin = Math.ceil((col * gridSize['cell_width']) * this.scale[0]);
