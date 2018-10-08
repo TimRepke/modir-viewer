@@ -139,13 +139,12 @@ function init(data) {
     let landscape = new Landscape(data);
 }
 
-d3.json("/data/export.json", init);
-
+d3.json(file, init);
 
 function reload() {
     let elem = document.getElementById('svg');
     elem.parentNode.removeChild(elem);
-    d3.json("/data/export.json", init);
+    d3.json(file, init);
 }
 
 /*

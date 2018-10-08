@@ -84,8 +84,9 @@ class WordGrid {
         let data = this.data['word_grid'].reduce((acc, curr, i) => {
             return acc.concat(curr);
         }, []);
+
         return data.reduce((acc, curr, i) => { // probably in column major order
-            let col = Math.floor(i / gridSize['cols']);
+            let col = Math.floor((i / gridSize['cols']));
             let row = Math.floor((i - (col * gridSize['rows'])) % gridSize['rows']);
             //console.log('col: ' + col + ' | row: ' + row);
 
