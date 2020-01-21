@@ -13,14 +13,8 @@ class Heatmap {
         this.filteredDocuments = [];
         this.allDocuments = Object.values(this.data['docs']);
 
-        this.initSidebar();
-
         this.heatmapOn = true;
-        let that = this;
-        $('#' + this.checkboxId).change(function() {
-            that.heatmapOn = $(this).prop('checked');
-            that.update();
-        })
+        this.initSidebar();
     }
 
 
@@ -141,6 +135,10 @@ class Heatmap {
             orientation: "horizontal",
             animate: true
         });
+        $('#' + this.checkboxId).change(function() {
+            that.heatmapOn = $(this).prop('checked');
+            that.update();
+        })
     }
 
     slideHeatmap(percentageLow, percentageHigh) {

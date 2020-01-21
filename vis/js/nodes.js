@@ -1,13 +1,15 @@
 class Nodes {
-    constructor(data, svgGroup, searchBoxId, listId) {
+    constructor(data, svgGroup, searchBoxId, listId, checkboxId) {
         this.data = data;
         this.svgGroup = svgGroup;
         this.searchBox = document.getElementById(searchBoxId);
         this.zoom = 1.0;
         this.customPointScale = 1.0;
         this.listId = listId;
+        this.checkboxId = checkboxId;
+        this.nodesVisible = true;
 
-        this.nodeData = Object.values(this.data['nodes']).sort((a, b) => b['weight'] - a['weight'])
+        this.nodeData = Object.values(this.data['nodes']).sort((a, b) => b['weight'] - a['weight']);
 
         //this.initLandscape();
         this.initSidebar();
@@ -77,6 +79,11 @@ class Nodes {
             orientation: "horizontal",
             animate: true
         });
+
+        $('#' + this.checkboxId).change(function() {
+            that.nodesVisible = $(this).prop('checked');
+            that.svgGroup.style('visibility', that.nodesVisible ? 'visible' : 'hidden' );
+        })
     }
 
 
@@ -95,7 +102,9 @@ class Nodes {
     }
 
     zoomLevel(d) {
-        return 3 * this.zoom * this.customPointScale;
+        let zoomLevel = 2 * this.zoom * this.customPointScale;
+        if (this.isSelected(d)) return 3 * zoomLevel;
+        return zoomLevel;
     }
 
     getSelectedNode() {
@@ -147,7 +156,9 @@ class Nodes {
 
         let that = this;
 
-        let filteredNodeData = this.nodeData.slice(Math.max(Math.min(this.thresholdLow * this.nodeData.length, this.nodeData.length - 1), 0), Math.max(this.thresholdHigh * this.nodeData.length) - 1);
+        let filteredNodeData = this.nodeData.slice(
+            Math.max(Math.min(this.thresholdLow * this.nodeData.length, this.nodeData.length - 1), 0),
+            Math.max(this.thresholdHigh * this.nodeData.length) - 1);
         filteredNodeData.reverse();
 
         let dots = this.svgGroup.selectAll("circle")
@@ -194,7 +205,6 @@ class Nodes {
 
         let peopleCircleAttributes = dots
             .attr("r", (d) => {
-                if (that.isSelected(d)) return 2 * this.zoomLevel(d);
                 return this.zoomLevel(d);
             })
             .style("fill", function (d) {

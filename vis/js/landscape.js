@@ -29,23 +29,25 @@ class Landscape {
         this.heatmapGroup = this.svgGroup.append('g');
         this.edgeGroup = this.svgGroup.append('g');
         this.nodesGroup = this.svgGroup.append('g');
-        this.wordGridGroup = this.svgGroup.append('g');
         this.documentGroup = this.svgGroup.append('g');
+        this.wordGridGroup = this.svgGroup.append('g');
 
         let categoriesId = 'categories';
         let categoriesSearchId = 'categorySearch';
         let nodesId = 'persons';
+        let nodesCheckboxId = 'nodes-checkbox';
+        let edgesCheckboxId = 'connections-checkbox';
         let nodesSearchId = 'personSearch';
         let documentsId = 'filteredDocuments';
         let heatmapCheckboxId = 'heatmap-checkbox';
         this.documentGroup.attr('id', documentsId);
 
         this.categories = new Categories(data, categoriesSearchId, categoriesId, 'category_b', heatmapCheckboxId);
-        this.edges = new Edges(data, this.edgeGroup);
-        this.nodes = new Nodes(data, this.nodesGroup, nodesSearchId, nodesId);
+        this.edges = new Edges(data, this.edgeGroup, edgesCheckboxId, !true);
         this.heatmap = new Heatmap(data, this.heatmapGroup, this.canvasSize, documentsId, heatmapCheckboxId);
+        this.nodes = new Nodes(data, this.nodesGroup, nodesSearchId, nodesId, nodesCheckboxId);
+        this.documents = new Documents(data, this.documentGroup, this.categories, categoriesId, nodesId, documentsId,1.5);
         this.wordGrid = new WordGrid(data, this.wordGridGroup, this.scale);
-        this.documents = new Documents(data, this.documentGroup, this.categories, categoriesId, nodesId, documentsId);
 
         this.update();
         this.initZoom();
@@ -74,7 +76,7 @@ class Landscape {
             slide: function (event, ui) {
                 that.slideSize(ui.value / 10);
             },
-            orientation: "vertical",
+            orientation: "horizontal",
             range: "min",
             min: 5,
             max: 30,
@@ -134,9 +136,9 @@ class Landscape {
 
 
 }
-
+let landscapeInstance;
 function init(data) {
-    let landscape = new Landscape(data);
+    landscapeInstance = new Landscape(data);
 }
 
 d3.json(file, init);

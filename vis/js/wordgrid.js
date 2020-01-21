@@ -71,12 +71,12 @@ class WordGrid {
     }
 
     fontSize(d) {
-        let size = Math.max(Math.min(15 * (1 / this.zoom), 20), 3);
+        let size = Math.max(Math.min(15 * (1 / this.zoom), 20), 8);
         size = Math.min(Math.max(size, d.size), 20);
-        return size + 'px';
+        return size/this.zoom + 'px';
     }
     fillOpacity(d) {
-        return Math.max(Math.min(d.size / 5, 1.0), 0.4);
+        return 0.9;//return Math.max(Math.min(d.size / 5, 1.0), 0.4);
     }
 
     computeTopWordsData() {

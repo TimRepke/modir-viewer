@@ -1,17 +1,22 @@
 class Documents {
-    constructor(data, svgGroup, categories, categoriesId, nodesId, listId, defaultRadius = 1.5) {
+    constructor(data, svgGroup, categories, categoriesId, nodesId, listId, defaultRadius = 1.8) {
         this.data = data;
         this.svgGroup = svgGroup;
         this.categories = categories;
         this.listId = listId;
-        $('#' + categoriesId).on('selectedDocs', (event, selection) => { this.setHighlightedDocs(selection, selection !== [])});
-        $('#' + nodesId).on('selectedDocs', (event, selection) => { this.setHighlightedDocs(selection, selection !== [])});
+        $('#' + categoriesId).on('selectedDocs', (event, selection) => {
+            this.setHighlightedDocs(selection, selection !== [])
+        });
+        $('#' + nodesId).on('selectedDocs', (event, selection) => {
+            this.setHighlightedDocs(selection, selection !== [])
+        });
         this.defaultRadius = defaultRadius;
         this.zoom = 1.0;
         this.customPointScale = 1.0;
 
         this.highlightColour = '#ff0c27';
-        this.baseColour = '#565656';
+        //this.baseColour = '#565656';
+        this.baseColour = '#ffa503';
         this.highlighted = [];
 
         this.initLandscape();
@@ -29,7 +34,8 @@ class Documents {
             .attr('title', function (d) {
                 return 'Description: ' + d['text'];
             })
-            .attr('data-toggle', 'modal') //.attr('onclick', this.documentOnClick.bind(this))
+            .attr('data-toggle', 'modal')
+            //.attr('onclick', this.documentOnClick.bind(this))
             .attr('data-target', '#email-modal')
             .attr('data-tooltip', 'tooltip')
             .attr('data-placement', 'top')
@@ -43,20 +49,20 @@ class Documents {
         let that = this;
         let attributes = this.points
             .style("fill", function (d) {
-                if (!that.hasSelection() || that.isSelected(d))
-                    return that.categories.getColour(d) || that.baseColour;
+                if (that.hasSelection() && that.isSelected(d))
+                    return '#ff0000';// that.categories.getColour(d) || that.baseColour;
                 return that.baseColour;
             })
             .style("fill-opacity", function (d) {
-                if (!that.hasSelection() || that.isSelected(d))
-                    return 0.8;
-                return 0.2;
+                if (that.hasSelection() && that.isSelected(d))
+                    return 1.0;
+                return 0.5;
 
             })
             .attr('r', (d) => {
                 if (this.hasSelection() && this.isSelected(d))
-                    return this.zoom * 1.6 * this.customPointScale;
-                return this.zoom * this.customPointScale;
+                    return this.zoom * this.defaultRadius * this.customPointScale;
+                return this.zoom * this.defaultRadius * 1.5 * this.customPointScale;
             });
     }
 
@@ -72,7 +78,9 @@ class Documents {
         let domElement = $(event.target);
         //this.update();
 
-        let text = domElement.attr('title');
+        let text = domElement.attr('title') || domElement.attr('data-original-title');
+        console.log(event);
+
         $('.modal-body').html(text);
         $('.modal-title').html('');
 
@@ -81,7 +89,7 @@ class Documents {
     adjustZoomLevel(currentZoomLevel) {
         let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 0.6);
         if (Math.abs(scale - this.zoom) > 0.32) {
-            this.points.attr('r', scale * this.customPointScale);
+            this.points.attr('r', scale * this.customPointScale * this.defaultRadius);
             this.zoom = scale;
         }
     }
