@@ -30,3 +30,12 @@
     overflow: hidden;
     width: 100%;
 }
+
+
+#hover-mail {
+    display: none;
+}
+
+body {
+    overflow: hidden;
+}

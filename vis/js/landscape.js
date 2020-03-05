@@ -94,7 +94,7 @@ class Landscape {
     static computeSize() {
         let main = $('#main');
         let navbar = $('#top-navbar');
-        return [main.width(), main.height() - navbar.height()];
+        return [main.width(), main.height()];// - navbar.height()];
     }
 
     calculateVectorPosition(vec) {
