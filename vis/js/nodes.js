@@ -1,12 +1,12 @@
 class Nodes {
-    constructor(data, svgGroup, searchBoxId, listId, checkboxId) {
+    constructor(data, svgGroup) {
         this.data = data;
         this.svgGroup = svgGroup;
-        this.searchBox = document.getElementById(searchBoxId);
+        this.searchBox = document.getElementById(PARAMS.get('nodes_searchId'));
         this.zoom = 1.0;
         this.customPointScale = 1.0;
-        this.listId = listId;
-        this.checkboxId = checkboxId;
+        this.listId = PARAMS.get('nodes_id');
+        this.checkboxId = PARAMS.get('nodes_checkboxId');
         this.nodesVisible = true;
 
         this.nodeData = Object.values(this.data['nodes']).sort((a, b) => b['weight'] - a['weight']);
@@ -15,17 +15,15 @@ class Nodes {
         this.initSidebar();
         this.selectedNode = null;
 
-        this.thresholdLow = 0;
-        this.thresholdHigh = 100;
+        this.thresholdLow = PARAMS.get('nodes_filterMinimum');
+        this.thresholdHigh = PARAMS.get('nodes_filterMaximum');
         this.total = 100;
 
-        this.maxNodeWeight = this.nodeData.reduce((acc, curr, i) => {return Math.max(acc, curr['weight'])}, 0);
+        this.maxNodeWeight = this.nodeData.reduce((acc, curr, i) => Math.max(acc, curr['weight']), 0);
 
         this.update();
         this.adjustZoomLevel(1.0);
-
     }
-
 
     initSidebar() {
         let that = this;
@@ -65,7 +63,6 @@ class Nodes {
             });
 
         this.searchBox.addEventListener('keyup', this.filterNodeRadios.bind(this));
-
 
         $("#slider-nodes").slider({
             range: true,
@@ -208,12 +205,12 @@ class Nodes {
                 return this.zoomLevel(d);
             })
             .style("fill", function (d) {
-                if (that.isSelected(d)) return '#ff0c27';
-                return '#2357d6';
+                if (that.isSelected(d)) return PARAMS.get('nodes_colourSelected');
+                return PARAMS.get('nodes_colour');
             })
             .style("fill-opacity", function (d) {
                 if (that.isSelected(d)) return 1.0;
-                return 0.8;
+                return PARAMS.get('nodes_opacity');
             })
             .style('stroke', function (d) {
                 if (that.isSelected(d)) return 'white';

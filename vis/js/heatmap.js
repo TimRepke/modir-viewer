@@ -1,11 +1,11 @@
 class Heatmap {
-    constructor(data, heatmap, canvasSize, documentsId, checkboxId) {
+    constructor(data, heatmap, canvasSize) {
         this.data = data; // prob unused
         this.heatmap = heatmap;
         this.size = canvasSize;
-        this.checkboxId = checkboxId;
+        this.checkboxId = PARAMS.get('heatmap_checkboxId');
 
-        $('#' + documentsId).on('filteredDocuments', (event, documents) => { this.show(documents);});
+        $('#' + PARAMS.get('documents_id')).on('filteredDocuments', (event, documents) => { this.show(documents);});
 
         this.thresholdLow = 0.05;
         this.thresholdHigh = 1.0;

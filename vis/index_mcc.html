@@ -152,6 +152,7 @@
 <script src="lib/d3.v4.min.js"></script>
 <script src="lib/d3-hsv.v0.1.min.js"></script>
 <script src="lib/d3-contour.v1.min.js"></script>
+<script src="lib/d3.ForceBundle.js"></script>
 
 <!-- Icons -->
 <script src="lib/feather.min.js"></script>
@@ -168,8 +169,11 @@
 
 <!-- remap tooltip so can be at the same time as modal -->
 <script>
-    //let file = '/data/export_modir_01.json';
-    let file = '/data/mcc.json';
+    let config = {
+        'file': '/data/mcc.json',
+        'useEdgeBundling': false
+    };
+
     $(document).ready(function () {
         $('body').tooltip({
             selector: "[data-tooltip=tooltip]",

@@ -1,12 +1,12 @@
 class Categories {
-    constructor(data, searchBoxId, listId, cat_type, heatmapCheckboxId) { // cat_type = category_a
+    constructor(data) { // cat_type = category_a
         this.data = data;
-        this.listId = listId;
-        this.cat_type = cat_type;
-        this.categories = data[cat_type + '_index'];
-        this.searchBox = document.getElementById(searchBoxId);
+        this.listId = PARAMS.get('categories_id');
+        this.cat_type = PARAMS.get('categories_type');
+        this.categories = data[this.cat_type + '_index'];
+        this.searchBox = document.getElementById(PARAMS.get('categories_searchId'));
         this.selectedCategory = null;
-        this.heatmapCheckboxId = heatmapCheckboxId;
+        this.heatmapCheckboxId = PARAMS.get('heatmap_checkboxId');
 
         let size = Object.keys(this.categories).length;
         let i = 0;

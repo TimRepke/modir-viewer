@@ -175,7 +175,11 @@
 
 <!-- remap tooltip so can be at the same time as modal -->
 <script>
-    let file = '/data/export_modir_01.json';
+    let config = {
+        'file':'/data/export_modir_01.json',
+        'useEdgeBundling': true
+    };
+
     $(document).ready(function () {
         $('body').tooltip({
             selector: "[data-tooltip=tooltip]",

@@ -175,8 +175,13 @@
 
 <!-- remap tooltip so can be at the same time as modal -->
 <script>
-    //let file = '/data/export_modir_01.json';
-    let file = '/data/final.modir.json';
+    let config = {
+        'file': '/data/final.modir.json',
+        'edges_bundlingActive': !false,
+        'edges_bundlingCycles': 1,
+        'edges_bundlingIterations': 20
+    };
+
     $(document).ready(function () {
         $('body').tooltip({
             selector: "[data-tooltip=tooltip]",
@@ -192,5 +197,6 @@
 <script src="js/categories.js"></script>
 <script src="js/documents.js"></script>
 <script src="js/landscape.js"></script>
+
 </body>
 </html>

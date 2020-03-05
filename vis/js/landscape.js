@@ -12,6 +12,46 @@ function pos_y(d) {
     return d['pos'][1];
 }
 
+let PARAMS = {
+    'nodes_id': 'persons',
+    'nodes_checkboxId': 'nodes-checkbox',
+    'nodes_searchId': 'personSearch',
+    'nodes_filterMinimum': 0,
+    'nodes_filterMaximum': 100,
+    'nodes_colour': '#2357d6',
+    'nodes_colourSelected': '#ff0c27',
+    'nodes_opacity': 0.8,
+    'edges_checkboxId': 'connections-checkbox',
+    // more info: https://github.com/upphiminn/d3.ForceBundle
+    'edges_bundlingActive': false,
+    'edges_bundlingStepSize': 0.4,
+    'edges_bundlingCompatibilityThreshold': 0.6,
+    'edges_bundlingStiffness': 0.4,
+    'edges_bundlingIterations': 90,
+    'edges_bundlingIterationsRate': 0.6666667,
+    'edges_bundlingCycles': 6,
+    'edges_total': 100,
+    'edges_thresholdLow': 0.0,
+    'edges_thresholdHigh': 1.0,
+    'edges_minWidth': 0.5,
+    'edges_maxWidth': 15,
+    'edges_minOpacity': 0.1,
+    'edges_maxOpacity': 0.5,
+    'edges_edgesVisible': true,
+    'edges_strokeColour': '#303030',
+    'categories_id': 'categories',
+    'categories_searchId': 'categorySearch',
+    'categories_type': 'category_b',
+    'documents_id': 'filteredDocuments',
+    'documents_radiusDefault': 1.5,
+    'documents_colourHighlight': '#ff0c27',
+    'documents_colourBase': '#ffa503', // '#565656';
+    'documents_opacityNormal': 0.5,
+    'documents_opacityActive': 1.0,
+    'heatmap_checkboxId': 'heatmap-checkbox',
+    'get': key => config[key] || PARAMS[key]
+};
+
 class Landscape {
     constructor(data) {
 
@@ -23,7 +63,6 @@ class Landscape {
             this.canvasSize[1] / this.size['height']];
         this.scaleData();
 
-
         this.svgContainer = this.initSVGContainer();
         this.svgGroup = this.svgContainer.append('g');
         this.heatmapGroup = this.svgGroup.append('g');
@@ -32,21 +71,13 @@ class Landscape {
         this.documentGroup = this.svgGroup.append('g');
         this.wordGridGroup = this.svgGroup.append('g');
 
-        let categoriesId = 'categories';
-        let categoriesSearchId = 'categorySearch';
-        let nodesId = 'persons';
-        let nodesCheckboxId = 'nodes-checkbox';
-        let edgesCheckboxId = 'connections-checkbox';
-        let nodesSearchId = 'personSearch';
-        let documentsId = 'filteredDocuments';
-        let heatmapCheckboxId = 'heatmap-checkbox';
-        this.documentGroup.attr('id', documentsId);
+        this.documentGroup.attr('id', PARAMS.get('documents_id'));
 
-        this.categories = new Categories(data, categoriesSearchId, categoriesId, 'category_b', heatmapCheckboxId);
-        this.edges = new Edges(data, this.edgeGroup, edgesCheckboxId, !true);
-        this.heatmap = new Heatmap(data, this.heatmapGroup, this.canvasSize, documentsId, heatmapCheckboxId);
-        this.nodes = new Nodes(data, this.nodesGroup, nodesSearchId, nodesId, nodesCheckboxId);
-        this.documents = new Documents(data, this.documentGroup, this.categories, categoriesId, nodesId, documentsId,1.5);
+        this.categories = new Categories(data);
+        this.edges = new Edges(data, this.edgeGroup);
+        this.heatmap = new Heatmap(data, this.heatmapGroup, this.canvasSize);
+        this.nodes = new Nodes(data, this.nodesGroup);
+        this.documents = new Documents(data, this.documentGroup, this.categories);
         this.wordGrid = new WordGrid(data, this.wordGridGroup, this.scale);
 
         this.update();
@@ -133,20 +164,20 @@ class Landscape {
         this.wordGrid.adjustZoomLevel(currentZoomLevel);
         this.documents.adjustZoomLevel(currentZoomLevel);
     }
-
-
 }
+
 let landscapeInstance;
+
 function init(data) {
     landscapeInstance = new Landscape(data);
 }
 
-d3.json(file, init);
+d3.json(PARAMS.get('file'), init);
 
 function reload() {
     let elem = document.getElementById('svg');
     elem.parentNode.removeChild(elem);
-    d3.json(file, init);
+    d3.json(PARAMS.get('file'), init);
 }
 
 /*

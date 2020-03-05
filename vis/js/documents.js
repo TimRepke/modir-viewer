@@ -1,22 +1,21 @@
 class Documents {
-    constructor(data, svgGroup, categories, categoriesId, nodesId, listId, defaultRadius = 1.8) {
+    constructor(data, svgGroup, categories) {
         this.data = data;
         this.svgGroup = svgGroup;
         this.categories = categories;
-        this.listId = listId;
-        $('#' + categoriesId).on('selectedDocs', (event, selection) => {
+        this.listId = PARAMS.get('documents_id');
+        $('#' + PARAMS.get('categories_id')).on('selectedDocs', (event, selection) => {
             this.setHighlightedDocs(selection, selection !== [])
         });
-        $('#' + nodesId).on('selectedDocs', (event, selection) => {
+        $('#' + PARAMS.get('nodes_id')).on('selectedDocs', (event, selection) => {
             this.setHighlightedDocs(selection, selection !== [])
         });
-        this.defaultRadius = defaultRadius;
+        this.defaultRadius = PARAMS.get('documents_radiusDefault');
         this.zoom = 1.0;
         this.customPointScale = 1.0;
 
-        this.highlightColour = '#ff0c27';
-        //this.baseColour = '#565656';
-        this.baseColour = '#ffa503';
+        this.highlightColour = PARAMS.get('documents_colourHighlight');
+        this.baseColour = PARAMS.get('documents_colourBase');
         this.highlighted = [];
 
         this.initLandscape();
@@ -55,8 +54,8 @@ class Documents {
             })
             .style("fill-opacity", function (d) {
                 if (that.hasSelection() && that.isSelected(d))
-                    return 1.0;
-                return 0.5;
+                    return PARAMS.get('documents_opacityActive');
+                return PARAMS.get('documents_opacityNormal');
 
             })
             .attr('r', (d) => {

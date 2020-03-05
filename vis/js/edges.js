@@ -1,19 +1,19 @@
 class Edges {
-    constructor(data, svgGroup, checkboxId, bundleEdges = false) {
+    constructor(data, svgGroup) {
         this.svgGroup = svgGroup;
         this.data = data;
 
-        this.total = 100;
-        this.thresholdLow = 0.0;
-        this.thresholdHigh = 1.0;
-        this.minWidth = 0.5;
-        this.maxWidth = 15;
-        this.minOpacity = 0.1;
-        this.maxOpacity = 0.5;
-        this.checkboxId = checkboxId;
-        this.edgesVisible = true;
-        this.bundleEdges = bundleEdges;
-
+        this.total  = PARAMS.get('edges_total');
+        this.thresholdLow  = PARAMS.get('edges_thresholdLow');
+        this.thresholdHigh  = PARAMS.get('edges_thresholdHigh');
+        this.minWidth  = PARAMS.get('edges_minWidth');
+        this.maxWidth  = PARAMS.get('edges_maxWidth');
+        this.minOpacity  = PARAMS.get('edges_minOpacity');
+        this.maxOpacity  = PARAMS.get('edges_maxOpacity');
+        this.checkboxId = PARAMS.get('edges_checkboxId');
+        this.edgesVisible  = PARAMS.get('edges_edgesVisible');
+        this.bundleEdges = PARAMS.get('edges_bundlingActive');
+        this.strokeColour = PARAMS.get('edges_strokeColour');
         this.edgesAll = this.data['edges'].sort(function (a, b) {
             return a['weight'] - b['weight'];
         });
@@ -67,7 +67,7 @@ class Edges {
                     (d['weight'] / that.data['size']['edge_weights']['range']) *
                     (that.maxOpacity - that.minOpacity)) + that.minOpacity;
             })
-            .attr("stroke", "#303030")//"black")
+            .attr("stroke", this.strokeColour)
             .exit().remove();
     }
 
@@ -88,12 +88,17 @@ class Edges {
 
         console.log("Number of edges: " + edge_data.length);
         let forceBundler = d3.ForceEdgeBundling()
-            .step_size(0.4)
-            .compatibility_threshold(0.6)
-            .bundling_stiffness(0.4)
+            .step_size(PARAMS.get('edges_bundlingStepSize'))
+            .compatibility_threshold(PARAMS.get('edges_bundlingCompatibilityThreshold'))
+            .bundling_stiffness(PARAMS.get('edges_bundlingStiffness'))
+            .iterations(PARAMS.get('edges_bundlingIterations'))
+            .iterations_rate(PARAMS.get('edges_bundlingIterationsRate'))
+            .cycles(PARAMS.get('edges_bundlingCycles'))
             .nodes(node_data)
             .edges(edge_data);
+        console.log('initialised bundler');
         let bundledEdges = forceBundler();
+        console.log('done forcebundling');
         edges.forEach(function (edge, i) {
             edge['path'] = bundledEdges[i];
         });
@@ -125,7 +130,7 @@ class Edges {
                     (d['weight'] / that.data['size']['edge_weights']['range']) *
                     (that.maxOpacity - that.minOpacity)) + that.minOpacity;
             })
-            .attr("stroke", "#303030")//"black")
+            .attr("stroke", this.strokeColour)
             .attr("fill", "transparent")
             .exit().remove();
     }
