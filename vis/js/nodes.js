@@ -83,7 +83,6 @@ class Nodes {
         })
     }
 
-
     slideNodes(percentageLow, percentageHigh) {
         this.thresholdLow = percentageLow;
         this.thresholdHigh = percentageHigh;
@@ -99,9 +98,9 @@ class Nodes {
     }
 
     zoomLevel(d) {
-        let zoomLevel = 2 * this.zoom * this.customPointScale;
-        if (this.isSelected(d)) return 3 * zoomLevel;
-        return zoomLevel;
+        if (this.isSelected(d))
+            return PARAMS.get('nodes_radiusActive') * this.zoom * this.customPointScale;
+        return PARAMS.get('nodes_radiusDefault') * this.zoom * this.customPointScale;
     }
 
     getSelectedNode() {
@@ -205,12 +204,12 @@ class Nodes {
                 return this.zoomLevel(d);
             })
             .style("fill", function (d) {
-                if (that.isSelected(d)) return PARAMS.get('nodes_colourSelected');
-                return PARAMS.get('nodes_colour');
+                if (that.isSelected(d)) return PARAMS.get('nodes_colourActive');
+                return PARAMS.get('nodes_colourDefault');
             })
             .style("fill-opacity", function (d) {
-                if (that.isSelected(d)) return 1.0;
-                return PARAMS.get('nodes_opacity');
+                if (that.isSelected(d)) return PARAMS.get('nodes_opacityActive');
+                return PARAMS.get('nodes_opacityDefault');
             })
             .style('stroke', function (d) {
                 if (that.isSelected(d)) return 'white';

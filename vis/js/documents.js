@@ -10,12 +10,9 @@ class Documents {
         $('#' + PARAMS.get('nodes_id')).on('selectedDocs', (event, selection) => {
             this.setHighlightedDocs(selection, selection !== [])
         });
-        this.defaultRadius = PARAMS.get('documents_radiusDefault');
         this.zoom = 1.0;
         this.customPointScale = 1.0;
 
-        this.highlightColour = PARAMS.get('documents_colourHighlight');
-        this.baseColour = PARAMS.get('documents_colourBase');
         this.highlighted = [];
 
         this.initLandscape();
@@ -41,7 +38,7 @@ class Documents {
             .attr('data-html', 'true')
             .attr("cx", pos_x)
             .attr("cy", pos_y)
-            .attr('r', this.defaultRadius);
+            .attr('r', PARAMS.get('documents_radiusDefault'));
     }
 
     update() {
@@ -49,19 +46,19 @@ class Documents {
         let attributes = this.points
             .style("fill", function (d) {
                 if (that.hasSelection() && that.isSelected(d))
-                    return '#ff0000';// that.categories.getColour(d) || that.baseColour;
-                return that.baseColour;
+                    return PARAMS.get('documents_colourActive');
+                return PARAMS.get('documents_colourDefault');
             })
             .style("fill-opacity", function (d) {
                 if (that.hasSelection() && that.isSelected(d))
                     return PARAMS.get('documents_opacityActive');
-                return PARAMS.get('documents_opacityNormal');
+                return PARAMS.get('documents_opacityDefault');
 
             })
             .attr('r', (d) => {
                 if (this.hasSelection() && this.isSelected(d))
-                    return this.zoom * this.defaultRadius * this.customPointScale;
-                return this.zoom * this.defaultRadius * 1.5 * this.customPointScale;
+                    return this.zoom * PARAMS.get('documents_radiusActive') * this.customPointScale;
+                return this.zoom * PARAMS.get('documents_radiusDefault') * this.customPointScale;
             });
     }
 
@@ -88,7 +85,7 @@ class Documents {
     adjustZoomLevel(currentZoomLevel) {
         let scale = Math.max(Math.min(1.5 / currentZoomLevel, 2.0), 0.6);
         if (Math.abs(scale - this.zoom) > 0.32) {
-            this.points.attr('r', scale * this.customPointScale * this.defaultRadius);
+            this.points.attr('r', scale * this.customPointScale * PARAMS.get('documents_radiusDefault'));
             this.zoom = scale;
         }
     }

@@ -18,9 +18,12 @@ let PARAMS = {
     'nodes_searchId': 'personSearch',
     'nodes_filterMinimum': 0,
     'nodes_filterMaximum': 100,
-    'nodes_colour': '#2357d6',
-    'nodes_colourSelected': '#ff0c27',
-    'nodes_opacity': 0.8,
+    'nodes_colourDefault': '#2357d6',
+    'nodes_colourActive': '#ff0c27',
+    'nodes_opacityDefault': 0.8,
+    'nodes_opacityActive': 1.0,
+    'nodes_radiusDefault': 2.2,
+    'nodes_radiusActive': 6.0,
     'edges_checkboxId': 'connections-checkbox',
     // more info: https://github.com/upphiminn/d3.ForceBundle
     'edges_bundlingActive': false,
@@ -44,9 +47,10 @@ let PARAMS = {
     'categories_type': 'category_b',
     'documents_id': 'filteredDocuments',
     'documents_radiusDefault': 1.5,
-    'documents_colourHighlight': '#ff0c27',
-    'documents_colourBase': '#ffa503', // '#565656';
-    'documents_opacityNormal': 0.5,
+    'documents_radiusActive': 3.0,
+    'documents_colourDefault': '#ffa503', // '#565656';
+    'documents_colourActive': '#ff0c27',
+    'documents_opacityDefault': 0.5,
     'documents_opacityActive': 1.0,
     'heatmap_checkboxId': 'heatmap-checkbox',
     'get': key => config[key] || PARAMS[key]
