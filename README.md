@@ -1,4 +1,27 @@
-# MODiR Landscape Prototype using D3
+# Joint Visualisation of Network and Text Data
+
+Many large text collections exhibit graph structures, either inherent to the content itself or encoded in the metadata of the individual documents. Example graphs extracted from document collections are co-author networks, citation networks, or named-entity-cooccurrence networks. Furthermore, social networks can be extracted from email corpora, tweets, or social media. When it comes to visualising these large corpora, either the textual content or the network graph are used.
+
+With MODiR (multi-objective dimensionality reduction), we propose to incorporate both, text and graph, to not only visualise the semantic information encoded in the documents' content but also the relationships expressed by the inherent network structure. To this end, we introduced a novel algorithm based on multi-objective optimisation to jointly position embedded documents and graph nodes in a two-dimensional landscape.
+
+This repository contains the reference implementation for our IUI 2020 paper "Exploration Interface for Jointly Visualised Text and Graph Data".
+
+For more information on that project, please visit https://hpi.de/naumann/s/modir.html   
+... or clone this repo and open the `index.html` file in your browser.
+
+
+```
+@inproceedings{repke2020exploration,
+  author = {Repke, Tim and Krestel, Ralf},
+  booktitle = {Proceedings of the International Conference on Intelligent User Interfaces Companion (IUI)},
+  title = {Exploration Interface for Jointly Visualised Text and Graph Data},
+  year = {2020},
+  publisher {ACM},
+  pages={1--2}
+}
+```
+
+## MODiR Landscape Prototype using D3
 run server:
 
 ```
