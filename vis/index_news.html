@@ -171,12 +171,18 @@
 <!-- remap tooltip so can be at the same time as modal -->
 <script>
     let config = {
-        'file': '/data/finalnews2.modir.json',
+        'file': 'data/finalnews2.modir.json',
         'edges_bundlingActive': true,
         'documents_colourDefault': '#484848',
         'documents_opacityDefault': 0.5,
         'documents_radiusDefault': 1.2,
-        'documents_radiusActive': 2.5
+        'documents_radiusActive': 2.5,
+        'edges_bundlingStepSize': 0.4,
+        'edges_bundlingCompatibilityThreshold': 0.4,
+        'edges_bundlingStiffness': 0.3,
+        'edges_bundlingIterations': 90,
+        'edges_bundlingIterationsRate': 0.6666667,
+        'edges_bundlingCycles': 6,
     };
 
     $(document).ready(function () {
